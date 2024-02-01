@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+    <head>
+        <title>News Portal</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" integrity="sha512-6JR4bbn8rCKvrkdoTJd/VFyXAN4CE9XMtgykPWgKiHjou56YDJxWsi90hAeMTYxNwUnKSQu9JPc3SQUg+aGCHw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        
+        <script>
+            tinymce.init({
+                selector: 'textarea#id_content',
+                // Add other configuration options as needed
+                // Basic toolbar configuration
+                toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image',
+
+            // Additional plugins
+            plugins: 'link image',
+
+            // Configure the paste plugin for handling content pasted from external sources
+            paste_data_images: true,
+            paste_as_text: false,
+
+            // Customize the paste_preprocess function for handling pasted content
+            paste_preprocess: function(plugin, args) {
+            // Convert pasted URLs to links
+            if (args.content.includes('http://') || args.content.includes('https://')) {
+                args.content = '<a href="' + args.content + '" target="_blank">' + args.content + '</a>';
+            }
+            },
+            });
+        </script>
+        
+        
+        <link rel="stylesheet" href="{% static 'css/news.css' %}">
+    </head>
+    <body>
+        <div class="page-header">
+            {% block navbar %}
+                <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
+                <a class="navbar-brand" href="/">Application</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href={% url 'home' %}>Home <span class="sr-only">(current)</span></a>
+                    </li>
+        
+                    </ul>
+                </div>
+                </nav>
+            {% endblock %}
+        </div>
+
+        <div class="content container">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </body>
+</html>

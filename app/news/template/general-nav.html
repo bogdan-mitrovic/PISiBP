@@ -1,0 +1,37 @@
+<nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
+<a class="navbar-brand" href="/">Application</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarCollapse">
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+            <a class="nav-link" href={% url 'home' %}>Home <span class="sr-only">(current)</span></a>
+        </li>
+
+        <form action="{% url 'combined-search' %}" method="get" class="form-inline">
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Select Category
+                </button>
+                <div class="dropdown-menu" aria-labelledby="categoryDropdown">
+                    {% for category in categories %}
+                        <a class="dropdown-item" href="#" onclick="document.getElementById('selectedCategory').value='{{ category.id }}';">{{ category.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <input type="hidden" id="selectedCategory" name="cat" value="">
+            <input class="form-control mr-sm-2" name="search" type="search" placeholder="Keyword(title,tag,content)" aria-label="Search">
+            
+            <label for="selectedDate">Select Date:</label>
+            <input type="date" id="selectedDate" name="date">
+
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+        
+        <li class="nav-item">
+            <a class="nav-link" href={% url 'login' %}>Login</a>
+        </li>
+    </ul>
+</div>
+</nav>
