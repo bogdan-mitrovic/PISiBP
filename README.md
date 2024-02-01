@@ -49,35 +49,35 @@
 
 <br>
 
-Искористити следеће команде(*anaconda* варијанта):
+Искористити следеће команде (*anaconda* варијанта):
 ```bash
   conda env create -n "ime_okruzenja" python=3.7.9
   conda activate ime_okruzenja
 ```
 <br>
 
-или(*venv* варијанта):
+или (*venv* варијанта):
 
 ```bash
   python3.7.9 -m venv ime_okruzenja
 ```
 *venv* активација за *Windows* кориснике
 ```bash
-  venv\Scripts\activate
+  ime_okruzenja\Scripts\activate
 ```
 
 *venv* активација за *Linux/MacOS* кориснике
 ```bash
-  source venv/bin/activate
+  source ime_okruzenja/bin/activate
 ```
 <br>
 
 Потребно је активирати окружење након ресетовања система, а пре покретања пројекта.
-Како бисте изашли из виртуелног окружења, користите:
+Како бисте изашли из виртуелног окружења, користите (*anaconda* варијанта):
 ```bash
   conda deactivate
 ```
-или
+или (*venv* варијанта):
 
 ```bash
   deactivate
