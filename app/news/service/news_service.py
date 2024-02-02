@@ -10,9 +10,9 @@ from django.conf import settings
 from django import forms
 from ..models import Category
 from ..models import News
-from ..models import Like
+from ..models import News_draft
+from ..models import Likes
 from ..models import Comment
-from ..models import Image
 from django.contrib.auth.models import User
 from tinymce.widgets import TinyMCE
 class NewsService():
@@ -43,7 +43,7 @@ class NewsService():
         news=News.objects.all()
         if keyword:
             try:
-                news = news.filter(Q(content__icontains=keyword) | Q(title__icontains=keyword) | Q(tags__icontains=keyword))
+                news = news.filter(Q(content__icontains=keyword) | Q(title__icontains=keyword) | Q(tags__name__icontains=keyword))
             except Exception as e: raise Http404("DB Error: cant get searched news")
 
         if id:
@@ -73,11 +73,13 @@ class NewsService():
         try:
             cat = CategoryService().getByCategoryId(form_data["category_id"])
             date = timezone.now()
-            try:
-                image = Image(img=form_data["image"])
+            """try:
+                image_file = form_data["image"]
+                image = Image(img=image_file)
                 image.save()
             except Exception as e: raise Http404("Couldn't create/save image") 
-            news = News(title=form_data["title"], tags = form_data["tags"], content = form_data["content"], category = cat, publish_date=date, image=image)
+            """
+            news = News(title=form_data["title"], tags = form_data["tags"], content = form_data["content"], category = cat, publish_date=date)
             news.save()
         except Exception as e: raise Http404("DB Error: Could not save news") 
 
@@ -118,17 +120,33 @@ class CommentService():
 
     def saveNewComment(self, form_data):
         try:
+            date = timezone.now()
             news = NewsService().getById(form_data["news_id"])
-            comments = Comment(text=form_data["text"], news = news, user = form_data["user"], tmp_username=form_data["tmp_username"])        
+            comments = Comment(text=form_data["text"], news = news, user = form_data["user"], tmp_username=form_data["tmp_username"], publish_date = date)        
             comments.save()
         except Exception as e: raise Http404("DB Error: Could not save comment")
 
 
-class Add_news_Form(forms.Form):
+class Add_news_Form(forms.ModelForm):
     title = forms.CharField(max_length = 50, required=True)
     content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
-    tags = forms.CharField(max_length = 50, required=True)
     image = forms.ImageField(required=False)
+    is_up_for_review = forms.BooleanField(required=False)
+    class Meta:
+        model = News_draft
+        fields = ['title', 'tags', 'content', 'category', 'image', 'is_up_for_review' ]
+
+
+class Edit_news_Form(forms.ModelForm):
+    title = forms.CharField(max_length = 50, required=True)
+    content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
+    image = forms.ImageField(required=False)
+    class Meta:
+        model = News
+        fields = ['title', 'tags', 'content', 'image']
+
+
+
 
 
 
@@ -151,20 +169,31 @@ class UsersService():
         return users
     
 
-class LikesService():
+class DraftsService():
     def __init__(self):
         pass
 
-    def getNews(self):
-        likes = None
+    def getAll(self):
+        drafts = None
         try:
-            likes = Like.objects.filter(is_news=True)
-        except Exception as e: raise Http404("DB Error: Cant get all news likes")
-        return likes
+            drafts = News_draft.objects.all()
+        except Exception as e: raise Http404("DB Error: Cant get all drafts")
+        return drafts
     
-    def getComments(self):
-        likes = None
+    def getById(self, draft_id):
+        draft = None
         try:
-            likes = Like.objects.filter(is_news=False)
-        except Exception as e: raise Http404("DB Error: Cant get all comments likes")
-        return likes
+            draft = News_draft.objects.get(id=draft_id)
+        except Exception as e: raise Http404("DB Error: Cant get user by id")
+        return draft
+    
+
+    def getByNewsId(self, news_id):
+        drafts = None
+        try:
+            drafts = News_draft.objects.get(draft_of_id=news_id)
+        except Exception as e: raise Http404("DB Error: Cant get draft by news id")
+        return drafts
+    
+
+

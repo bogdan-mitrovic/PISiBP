@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'tinymce',
+    'taggit',
     'django.contrib.staticfiles',
     'news.apps.NewsConfig',
 ]

@@ -6,18 +6,21 @@ from django.contrib.auth.forms import UserCreationForm
 from django.http import Http404
 from django.core import serializers
 from django import forms
-
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from .service.authentication import CustomUserCreationForm
 from .service.news_service import CategoryService
 from .service.news_service import NewsService
 from .service.news_service import CommentService
-from .service.news_service import LikesService
 from .service.news_service import UsersService
+from .service.news_service import DraftsService
 from .service.news_service import Add_news_Form
+from .service.news_service import Edit_news_Form
 from .models import News
-from .models import Like
+from .models import News_draft
+from .models import Likes
+from django.contrib.contenttypes.models import ContentType
 user_not_supported =  {"error":"User not supported"}
 method_not_supported = {"error":"method not supported"}
 invalid_form = {"error":"invalid form"}
@@ -57,6 +60,14 @@ def view_users(request):
 
 
 
+def view_drafts(request):
+    drafts = DraftsService().getAll()
+    context = {
+            "drafts":drafts,
+    }
+    return render(request, 'drafts.html', context)
+
+
 
 
 def add(request):
@@ -65,11 +76,13 @@ def add(request):
         if form.is_valid():
             # Process the form data
             # Access form data using form.cleaned_data dictionary
-            form_data = dict(form.cleaned_data)
-            if "category_id" in request.POST:
-                form_data["category_id"]=request.POST["category_id"] 
+            news=form.save(commit=False)
+
             # Add your logic here
-            NewsService().saveNewNews(form_data)
+            date = timezone.now()
+            news.publish_date = date
+            news.save()
+            news.tags.set(form.cleaned_data['tags'])
             return redirect('home')
         else:
                 return JsonResponse(invalid_form, safe=False) 
@@ -83,13 +96,30 @@ def add(request):
     return render(request, 'add_news.html', context)
 
 
+"""
+def delete(request, news_id):
+    if request.user.is_authenticated:
+        news = NewsService().getById(news_id)
+        print(news)
+        try:
+            news.delete()
+        except Exception as e: raise Http404("DB Error: Cant delete news")
+    return redirect('home')
+"""
 
 def delete(request, news_id):
     news = NewsService().getById(news_id)
-    try:
-        news.delete()
-    except Exception as e: raise Http404("DB Error: Cant delete news")
+    if request.user.is_authenticated and not (News_draft.objects.filter(draft_of = news, is_up_for_deletion = True)):
+        
+        draft = News_draft(draft_of = news, is_up_for_deletion = True, title=news.title, is_up_for_review = True)
+        
+        try:
+            draft.save()
+        except Exception as e: raise Http404("DB Error: Cant create draft")
     return redirect('home')
+
+
+
 
 def delete_user(request, user_id):
     user = UsersService().getById(user_id)
@@ -97,6 +127,13 @@ def delete_user(request, user_id):
         user.delete()
     except Exception as e: raise Http404("DB Error: Cant delete user")
     return redirect('list-users')
+
+def delete_draft(request, draft_id):
+    draft = DraftsService().getById(draft_id)
+    try:
+        draft.delete()
+    except Exception as e: raise Http404("DB Error: Cant delete draft")
+    return redirect('list-drafts')
 
 
 
@@ -142,33 +179,107 @@ def register_user(request):
 
 
 def edit(request, news_id):
+    news = NewsService().getById(news_id)
     if request.method == 'POST':
-        form = Add_news_Form(request.POST, request.FILES)
-        if form.is_valid():
-            # Process the form data
-            # Access form data using form.cleaned_data dictionary
-            form_data = dict(form.cleaned_data)
-            if "category_id" in request.POST:
-                form_data["category_id"]=request.POST["category_id"] 
-            # Add your logic here
-            NewsService().saveNewNews(form_data)
-            return redirect('home')
-        else:
-            return JsonResponse(invalid_form, safe=False) 
+            form = Edit_news_Form(request.POST, request.FILES, instance=news)
+            if form.is_valid():
+                # Process the form data
+                # Access form data using form.cleaned_data dictionary
+                news_tmp = form.save(commit=False)
+                draft = News_draft(title=news_tmp.title, content=news_tmp.content, image=news_tmp.image, draft_of = news )
+                draft.save()
+                draft.tags.set(form.cleaned_data['tags'])
+                return redirect('home')
+            else:
+                    return JsonResponse(invalid_form, safe=False) 
     else:
-        news = NewsService().getById(news_id)
-        form = Add_news_Form(initial={'title':news.title,
-                                    'content':news.content,
-                                    'tags':news.tags,
-                                    'image':news.image,})
+        form = Edit_news_Form(instance=news)
         
+        context = {
+            "form":form
+        }
+        return render(request, 'edit_news.html', context)
+
+
+
+
+
+
+def edit_draft(request, draft_id):
+    draft = DraftsService().getById(draft_id)
+    if request.method == 'POST':
+            form = Add_news_Form(request.POST, request.FILES, instance=draft)
+            if form.is_valid():
+                # Process the form data
+                # Access form data using form.cleaned_data dictionary
+                form.save()
+                draft.tags.set(form.cleaned_data['tags'])
+                return redirect('home')
+            else:
+                    return JsonResponse(invalid_form, safe=False) 
+    else:
+        form = Add_news_Form(instance=draft)
+        
+        context = {
+            "form":form
+        }
+        return render(request, 'edit_draft.html', context)
+
+
+
+
+
+def draftdetail(request, draft_id):
+    draft = DraftsService().getById(draft_id)
+
     context = {
-            "news":news,
-            "categories": getCategory(request),
-            "form":form,
+        "draft":draft,
     }
-        #return JsonResponse(list(comments), safe=False)
-    return render(request, 'edit_news.html', context)
+    #return JsonResponse(list(comments), safe=False)
+    return render(request, 'draft_content.html', context)
+
+
+def approve_draft(request, draft_id):
+    draft = DraftsService().getById(draft_id)
+    if request.user.is_authenticated:
+        if not draft.draft_of:
+            date = timezone.now()
+            news = News(title=draft.title, content=draft.content, category=draft.category, image=draft.image, publish_date = date)
+            draft_tags = draft.tags.all()
+            try:
+                news.save()
+            except Exception as e: raise Http404("DB Error: Cant save news")
+            news.tags.set(draft_tags)
+            
+            try:
+                draft.delete()
+            except Exception as e: raise Http404("DB Error: Cant delete draft")
+        else:
+            if not draft.is_up_for_deletion:
+                date = timezone.now()
+                news = NewsService().getById(draft.draft_of.id)
+                news.title=draft.title
+                news.content=draft.content
+                news.image=draft.image
+                draft_tags = draft.tags.all()
+                try:
+                    news.save()
+                except Exception as e: raise Http404("DB Error: Cant save news")
+                news.tags.set(draft_tags)
+                try:
+                    draft.delete()
+                except Exception as e: raise Http404("DB Error: Cant delete draft")
+            else:
+                news = NewsService().getById(draft.draft_of.id)
+                try:
+                    news.delete()
+                    
+                except Exception as e: raise Http404("DB Error: Cant delete news")
+        
+    return redirect('home')
+
+
+
 
 
 
@@ -263,43 +374,43 @@ class MessageForm(forms.Form):
 
 def newslike(request, news_id):
     news = NewsService().getById(news_id)
-    likes = LikesService().getNews()
     # Get the unique identifier for the like
     like_identifier = get_like_identifier(request)
 
+    content_type = ContentType.objects.get_for_model(news)
 
-    if likes.filter(like_identifier=like_identifier).exists():
-        like=likes.get(like_identifier=like_identifier)
+    if Likes.objects.filter(content_type=content_type, object_id=news.id, like_identifier=like_identifier).exists():
+        like = Likes.objects.get(content_type=content_type, object_id=news.id, like_identifier=like_identifier)
         if not like.is_dislike:
             like.delete()
-            news.likes-=1
+            news.likes -= 1
             news.save()
         else:
-            news.likes+=1
-            news.dislikes-=1
+            news.likes += 1
+            news.dislikes -= 1
             news.save()
             like.is_dislike = False
             like.save()
     else:
-        news.likes+=1
+        news.likes += 1
         news.save()
-        like = Like(like_identifier=like_identifier, is_news=True, object_id=news.id, is_dislike=False)
+        like = Likes(like_identifier=like_identifier, content_type=content_type, object_id=news.id, is_dislike=False)
         try:
             like.save()
-        except Exception as e: raise Http404("DB Error: Cant save like")
+        except Exception as e:
+            raise Http404("DB Error: Cant save like")
 
-    return redirect('news-detail', news_id = news_id)
+    return redirect('news-detail', news_id=news_id)
 
 
 def newsdislike(request, news_id):
     news = NewsService().getById(news_id)
-    likes = LikesService().getNews()
     # Get the unique identifier for the like
     like_identifier = get_like_identifier(request)
+    content_type = ContentType.objects.get_for_model(news)
 
-
-    if likes.filter(like_identifier=like_identifier).exists():
-        like=likes.get(like_identifier=like_identifier)
+    if Likes.objects.filter(content_type=content_type, object_id=news.id, like_identifier=like_identifier).exists():
+        like = Likes.objects.get(content_type=content_type, object_id=news.id, like_identifier=like_identifier)
         if like.is_dislike:
             like.delete()
             news.dislikes-=1
@@ -313,7 +424,7 @@ def newsdislike(request, news_id):
     else:
         news.dislikes+=1
         news.save()
-        like = Like(like_identifier=like_identifier, is_news=True, object_id=news.id, is_dislike=True)
+        like = Likes(like_identifier=like_identifier, content_type=content_type, object_id=news.id, is_dislike=True)
         try:
             like.save()
         except Exception as e: raise Http404("DB Error: Cant save like")
@@ -325,13 +436,13 @@ def newsdislike(request, news_id):
 
 def commentlike(request, comment_id):
     comment = CommentService().getById(comment_id)
-    likes = LikesService().getComments()
     # Get the unique identifier for the like
     like_identifier = get_like_identifier(request)
 
+    content_type = ContentType.objects.get_for_model(comment)
 
-    if likes.filter(like_identifier=like_identifier).exists():
-        like=likes.get(like_identifier=like_identifier)
+    if Likes.objects.filter(content_type=content_type, object_id=comment.id, like_identifier=like_identifier).exists():
+        like = Likes.objects.get(content_type=content_type, object_id=comment.id, like_identifier=like_identifier)
         if not like.is_dislike:
             like.delete()
             comment.likes-=1
@@ -345,7 +456,7 @@ def commentlike(request, comment_id):
     else:
         comment.likes+=1
         comment.save()
-        like = Like(like_identifier=like_identifier, is_news=False, object_id=comment.id, is_dislike=False)
+        like = Likes(like_identifier=like_identifier, content_type=content_type, object_id=comment.id, is_dislike=False)
         try:
             like.save()
         except Exception as e: raise Http404("DB Error: Cant save like")
@@ -355,13 +466,12 @@ def commentlike(request, comment_id):
 
 def commentdislike(request, comment_id):
     comment = CommentService().getById(comment_id)
-    likes = LikesService().getComments()
     # Get the unique identifier for the like
     like_identifier = get_like_identifier(request)
+    content_type = ContentType.objects.get_for_model(comment)
 
-
-    if likes.filter(like_identifier=like_identifier).exists():
-        like=likes.get(like_identifier=like_identifier)
+    if Likes.objects.filter(content_type=content_type, object_id=comment.id, like_identifier=like_identifier).exists():
+        like = Likes.objects.get(content_type=content_type, object_id=comment.id, like_identifier=like_identifier)
         if like.is_dislike:
             like.delete()
             comment.dislikes-=1
@@ -375,7 +485,7 @@ def commentdislike(request, comment_id):
     else:
         comment.dislikes+=1
         comment.save()
-        like = Like(like_identifier=like_identifier, is_news=False, object_id=comment.id, is_dislike=True)
+        like = Likes(like_identifier=like_identifier, content_type=content_type, object_id=comment.id, is_dislike=True)
         try:
             like.save()
         except Exception as e: raise Http404("DB Error: Cant save like")

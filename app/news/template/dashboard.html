@@ -12,8 +12,8 @@
                     <div class="col-md-4">
                         <div class="card m-1">
                             <!--<img class="card-img-top" src="https://via.placeholder.com/150" alt="Card image cap">-->
-                            {% if item.image.img %}
-                                <img class="card-img-top thum-image" src="/media/{{item.image.img}}" alt="Card image cap">
+                            {% if item.image %}
+                                <img class="card-img-top thum-image" src="/media/{{item.image}}" alt="Card image cap">
                             {% else %}
                                 <img class="card-img-top thum-image" src="https://via.placeholder.com/150x150" alt="Card image cap">
                             {% endif %}

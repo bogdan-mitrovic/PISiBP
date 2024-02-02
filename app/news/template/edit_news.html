@@ -4,16 +4,6 @@
     <h2>Edit a news article</h2>
             <form method="post" action="" enctype="multipart/form-data">
                 {% csrf_token %}
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Select Category
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="categoryDropdown">
-                        {% for category in categories %}
-                            <a class="dropdown-item" href="#" onclick="document.getElementById('selectedCategory').value='{{ category.id }}';">{{ category.name }}</a>
-                        {% endfor %}
-                    </div>
-                </div>
                 <br>
                 <input type="hidden" id="selectedCategory" name="category_id" value="">
                 {{ form.as_p }}

@@ -1,15 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2>Add a news article</h2>
+    <h2>Edit a news draft</h2>
             <form method="post" action="" enctype="multipart/form-data">
                 {% csrf_token %}
                 <br>
+                <input type="hidden" id="selectedCategory" name="category_id" value="">
                 {{ form.as_p }}
-                <button type="submit">Add</button>
+                <button type="submit">Confirm</button>
             </form> 
-{% endblock %}
-
-{% block extrajs %}
-    {{ form.media }}
 {% endblock %}
