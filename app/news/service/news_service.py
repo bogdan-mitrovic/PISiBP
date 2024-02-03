@@ -39,7 +39,7 @@ class NewsService():
         except Exception as e: raise Http404("DB Error: Cant get news by category id")
         return news
 
-    def search(self, keyword, id, date):
+    def search(self, keyword, id, date1, date2):
         news=News.objects.all()
         if keyword:
             try:
@@ -51,9 +51,16 @@ class NewsService():
                 news = news.filter(category_id=id)
             except Exception as e: raise Http404("DB Error: Cant get news by category id")
 
-        if date:
+        start_date= datetime.strptime(date1, '%Y-%m-%d') if date1 else datetime(1970, 1, 1)
+        end_date = datetime.strptime(date2, '%Y-%m-%d') if date2 else datetime.now()
+
+        if start_date != end_date:
             try:
-                news = news.filter(Q(publish_date__icontains=date))
+                 news = news.filter(publish_date__range=[start_date, end_date])
+            except Exception as e: raise Http404("DB Error: Cant get news by date")
+        elif start_date == end_date:
+            try:
+                news = news.filter(Q(publish_date__icontains=date1))
             except Exception as e: raise Http404("DB Error: Cant get news by date")
         return news
 
@@ -145,6 +152,15 @@ class Edit_news_Form(forms.ModelForm):
         model = News
         fields = ['title', 'tags', 'content', 'image']
 
+class Edit_draft_Form(forms.ModelForm):
+    title = forms.CharField(max_length = 50, required=True)
+    content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
+    image = forms.ImageField(required=False)
+    is_up_for_review = forms.BooleanField(required=False)
+    class Meta:
+        model = News_draft
+        fields = ['title', 'tags', 'content', 'image', 'is_up_for_review' ]
+
 
 
 
@@ -191,7 +207,7 @@ class DraftsService():
     def getByNewsId(self, news_id):
         drafts = None
         try:
-            drafts = News_draft.objects.get(draft_of_id=news_id)
+            drafts = News_draft.objects.filter(draft_of_id=news_id)
         except Exception as e: raise Http404("DB Error: Cant get draft by news id")
         return drafts
     

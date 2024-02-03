@@ -28,4 +28,5 @@ urlpatterns = [
     path('pages/comment/dislike/<int:comment_id>', views.commentdislike, name='dislike-comment'),
     path('pages/search', views.newssearch, name='combined-search'),
     path('pages/comment', views.newscomment, name='news-comment'),
+     path('change_password/', views.change_password, name='change_password'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

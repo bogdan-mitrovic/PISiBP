@@ -22,13 +22,19 @@
         <input type="hidden" id="selectedCategory" name="cat" value="">
         <input class="form-control mr-sm-2" name="search" type="search" placeholder="Keyword(title,tag,content)" aria-label="Search">
         
-        <label for="selectedDate">Select Date:</label>
-        <input type="date" id="selectedDate" name="date">
+        <label for="selectedDate">From Date:</label>
+        <input type="date" id="selectedDate1" name="date1">
+
+        <label for="selectedDate">To Date:</label>
+        <input type="date" id="selectedDate2" name="date2">
         
         <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
     </form>
     <li class="nav-item">
         <a class="nav-link" href={% url 'logout' %}>Signout</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href={% url 'change_password' %}>Change Password</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" href={% url 'signup-page' %}>Register a user</a>

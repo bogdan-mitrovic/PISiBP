@@ -10,6 +10,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 
 
 
+
 class Category(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
@@ -17,6 +18,16 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profile')
+    categories = models.ManyToManyField(Category, related_name='users_with_privileges')
+
+    def __str__(self):
+        return self.user.username
+
+
 
 
 
@@ -57,6 +68,8 @@ class News_draft(models.Model):
     is_up_for_review = models.BooleanField(null=True)
     is_approved = models.BooleanField(null=True, default = False)
     is_up_for_deletion = models.BooleanField(null=True, default = False)
+    creator = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    was_seen_by_editor = models.BooleanField(null=True, default = False)
     def __str__(self):
         return self.title
     
@@ -77,7 +90,6 @@ class Comment(models.Model):
     id = models.AutoField(primary_key=True)
     text = models.CharField(max_length=1000)
     news = models.ForeignKey(News, null=True, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     tmp_username = models.CharField(null=True, max_length = 50)
     publish_date = models.DateTimeField('date published',null=True)
     likes = models.IntegerField(default=0)

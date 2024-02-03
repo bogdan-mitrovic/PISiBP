@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 from django.http import Http404
 from django.core import serializers
 from django import forms
@@ -10,6 +11,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from .service.authentication import CustomUserCreationForm
+from .service.authentication import CustomUserEditForm
 from .service.news_service import CategoryService
 from .service.news_service import NewsService
 from .service.news_service import CommentService
@@ -17,6 +19,7 @@ from .service.news_service import UsersService
 from .service.news_service import DraftsService
 from .service.news_service import Add_news_Form
 from .service.news_service import Edit_news_Form
+from .service.news_service import Edit_draft_Form
 from .models import News
 from .models import News_draft
 from .models import Likes
@@ -81,6 +84,7 @@ def add(request):
             # Add your logic here
             date = timezone.now()
             news.publish_date = date
+            news.creator = request.user
             news.save()
             news.tags.set(form.cleaned_data['tags'])
             return redirect('home')
@@ -109,13 +113,18 @@ def delete(request, news_id):
 
 def delete(request, news_id):
     news = NewsService().getById(news_id)
-    if request.user.is_authenticated and not (News_draft.objects.filter(draft_of = news, is_up_for_deletion = True)):
-        
-        draft = News_draft(draft_of = news, is_up_for_deletion = True, title=news.title, is_up_for_review = True)
-        
+    if request.user.is_superuser or request.user.is_staff:
         try:
-            draft.save()
-        except Exception as e: raise Http404("DB Error: Cant create draft")
+            news.delete()
+        except Exception as e: raise Http404("DB Error: Cant delete news")
+    else:    
+        if request.user.is_authenticated and not (News_draft.objects.filter(draft_of = news, is_up_for_deletion = True)):
+            
+            draft = News_draft(draft_of = news, is_up_for_deletion = True, title=news.title, is_up_for_review = True)
+            
+            try:
+                draft.save()
+            except Exception as e: raise Http404("DB Error: Cant create draft")
     return redirect('home')
 
 
@@ -136,29 +145,48 @@ def delete_draft(request, draft_id):
     return redirect('list-drafts')
 
 
-
 def edit_user(request, user_id):
     user = UsersService().getById(user_id)
+
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST,instance=user)
-        form.fields['password1'].required = False
-        form.fields['password2'].required = False
+        form = CustomUserEditForm(request.POST, instance=user)
+
         if form.is_valid():
             form.save()
-            # Redirect or do other actions upon successful registration
+            user.user_profile.categories.set(form.clean_categories())
+            # Redirect or do other actions upon successful user edit
             return redirect('list-users')
         else:
-            return JsonResponse(invalid_form, safe=False) 
+            return JsonResponse({'error': 'Invalid form data'}, status=400)
     else:
-        form = CustomUserCreationForm(instance=user)
-        form.fields['password1'].required = False
-        form.fields['password2'].required = False
+        form = CustomUserEditForm(instance=user)
+
     context = {
-            "user":user,
-            "form":form,
+        "user": user,
+        "form": form,
     }
-        #return JsonResponse(list(comments), safe=False)
+
     return render(request, 'edit_user.html', context)
+
+
+def change_password(request):
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            form = PasswordChangeForm(request.user, request.POST)
+            if form.is_valid():
+                user = form.save()
+                # Ensure the user stays logged in by updating the session hash
+                update_session_auth_hash(request, user)
+                return redirect('home')  # Replace 'profile' with the desired success redirect
+        else:
+            form = PasswordChangeForm(request.user)
+        
+        return render(request, 'change_password.html', {'form': form})
+    else:
+        return redirect('home')
+
+
+
 
 def register_user(request):
 
@@ -208,17 +236,19 @@ def edit(request, news_id):
 def edit_draft(request, draft_id):
     draft = DraftsService().getById(draft_id)
     if request.method == 'POST':
-            form = Add_news_Form(request.POST, request.FILES, instance=draft)
+            form = Edit_draft_Form(request.POST, request.FILES, instance=draft)
             if form.is_valid():
                 # Process the form data
                 # Access form data using form.cleaned_data dictionary
                 form.save()
                 draft.tags.set(form.cleaned_data['tags'])
+                draft.was_seen_by_editor = False
+                draft.save()
                 return redirect('home')
             else:
                     return JsonResponse(invalid_form, safe=False) 
     else:
-        form = Add_news_Form(instance=draft)
+        form = Edit_draft_Form(instance=draft)
         
         context = {
             "form":form
@@ -231,6 +261,8 @@ def edit_draft(request, draft_id):
 
 def draftdetail(request, draft_id):
     draft = DraftsService().getById(draft_id)
+    draft.was_seen_by_editor = True
+    draft.save()
 
     context = {
         "draft":draft,
@@ -266,9 +298,10 @@ def approve_draft(request, draft_id):
                     news.save()
                 except Exception as e: raise Http404("DB Error: Cant save news")
                 news.tags.set(draft_tags)
+                drafts = DraftsService().getByNewsId(draft.draft_of.id)
                 try:
-                    draft.delete()
-                except Exception as e: raise Http404("DB Error: Cant delete draft")
+                    drafts.delete()
+                except Exception as e: raise Http404("DB Error: Cant delete draft(s)")
             else:
                 news = NewsService().getById(draft.draft_of.id)
                 try:
@@ -324,8 +357,9 @@ def newscomment(request):
 def newssearch(request):
     search_key = request.GET.get('search')
     category_id = request.GET.get('cat')
-    date = request.GET.get('date')
-    news = NewsService().search(search_key, category_id, date)
+    date1 = request.GET.get('date1')
+    date2 = request.GET.get('date2')
+    news = NewsService().search(search_key, category_id, date1, date2)
 
     #print(news)
     categories = getCategory(request)
