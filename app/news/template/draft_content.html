@@ -9,10 +9,21 @@
 {% endblock %}
 
 {% block content %}
+      {% if not draft.is_up_for_deletion %}
         <div class="row">
             <div class="col-md-8">
-              <div class="row">
+              
+
+                    {% if draft.draft_of %}
+                    <div class="row">
+                      <h2>this is an edit of:</h2>
+                      <a href="{% url 'news-detail' draft.draft_of.id %}" class="btn btn-primary">News</a>
+                    </div>
+                  
+                    {%endif%}
+                  <div class="row">
                   <h1>{{draft.title}}</h1>
+                  
                   
                   <div class="col-md-12 p-1">
                     Tags:
@@ -50,11 +61,10 @@
                   <br>
                 <div>
                   <!-- Edit Button -->
-                    {% if not user.is_staff and user.is_authenticated %}
+                    {% if not request.user.is_staff   %}
                       <a href="{% url 'edit-draft' draft.id %}" class="btn btn-primary">Edit</a>
-                    {% endif %}
-                    {% if user.is_superuser or user.is_authenticated and user.is_staff %}
-                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteConfirmationModal">
+                    {% else %}
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteConfirmationModal1">
                       Approve
                     </button>
                     {% endif %}
@@ -65,17 +75,17 @@
     
              
         <!-- Confirmation Modal -->
-        <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal fade" id="deleteConfirmationModal1" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModal1Label" aria-hidden="true">
           <div class="modal-dialog" role="document">
               <div class="modal-content">
                   <div class="modal-header">
-                      <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Approval</h5>
+                      <h5 class="modal-title" id="deleteConfirmationModal1Label">Confirm Approval</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                           <span aria-hidden="true">&times;</span>
                       </button>
                   </div>
                   <div class="modal-body">
-                      Are you sure you want to publish this news draft?
+                      Are you sure you want to publish this draft?
                   </div>
                   <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -84,5 +94,34 @@
               </div>
           </div>
         </div>
-
+        {% else %}
+        <div class="row">
+            <h1>A journalist has requested the deletion of:</h1>
+            <a href="{% url 'news-detail' draft.draft_of.id %}" class="btn btn-primary">News</a>
+            {% if user.is_superuser or user.is_authenticated and user.is_staff %}
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteConfirmationModal2">
+                      Approve
+                    </button>
+            {% endif %}
+        </div>
+        <div class="modal fade" id="deleteConfirmationModal2" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModal2Label" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <h5 class="modal-title" id="deleteConfirmationModal2Label">Confirm Approval</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                      </button>
+                  </div>
+                  <div class="modal-body">
+                      Are you sure you want to delete these news?
+                  </div>
+                  <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                      <a href="{% url 'approve-draft' draft.id %}" class="btn btn-danger">Confirm</a>
+                  </div>
+              </div>
+          </div>
+        </div>
+        {% endif %}
 {% endblock %}

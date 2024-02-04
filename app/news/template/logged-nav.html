@@ -1,8 +1,4 @@
 <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
-<a class="navbar-brand" href="/">Application</a>
-<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-</button>
 <div class="collapse navbar-collapse" id="navbarCollapse">
     <ul class="navbar-nav mr-auto">
     <li class="nav-item active">
@@ -36,15 +32,31 @@
     <li class="nav-item">
         <a class="nav-link" href={% url 'change_password' %}>Change Password</a>
     </li>
+    {% if user.is_superuser %}
     <li class="nav-item">
         <a class="nav-link" href={% url 'signup-page' %}>Register a user</a>
     </li>
+    {% endif %}
+
+
+    {% if not user.is_superuser and not user.is_staff %}
     <li class="nav-item">
         <a class="nav-link" href={% url 'add-news-page' %}>Add an article</a>
     </li>
+    {% endif %}
+
+    {% if user.is_superuser %}
     <li class="nav-item">
         <a class="nav-link" href={% url 'list-users' %}>Users</a>
     </li>
+    {% endif %}
+
+    {% if not user.is_superuser and user.is_staff %}
+    <li class="nav-item">
+        <a class="nav-link" href={% url 'list-journalists' %}>Journalists</a>
+    </li>
+    {% endif %}
+    
     <li class="nav-item">
         <a class="nav-link" href={% url 'list-drafts' %}>Drafts</a>
     </li>

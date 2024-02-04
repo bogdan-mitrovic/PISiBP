@@ -15,6 +15,9 @@ from ..models import Likes
 from ..models import Comment
 from django.contrib.auth.models import User
 from tinymce.widgets import TinyMCE
+from django.core.files.storage import default_storage
+
+
 class NewsService():
     def __init__(self):
         pass
@@ -62,6 +65,7 @@ class NewsService():
             try:
                 news = news.filter(Q(publish_date__icontains=date1))
             except Exception as e: raise Http404("DB Error: Cant get news by date")
+        news = news.distinct()
         return news
 
     def updateViewCount(self, news_id):
@@ -129,7 +133,7 @@ class CommentService():
         try:
             date = timezone.now()
             news = NewsService().getById(form_data["news_id"])
-            comments = Comment(text=form_data["text"], news = news, user = form_data["user"], tmp_username=form_data["tmp_username"], publish_date = date)        
+            comments = Comment(text=form_data["text"], news = news, tmp_username=form_data["tmp_username"], publish_date = date)        
             comments.save()
         except Exception as e: raise Http404("DB Error: Could not save comment")
 
@@ -142,7 +146,12 @@ class Add_news_Form(forms.ModelForm):
     class Meta:
         model = News_draft
         fields = ['title', 'tags', 'content', 'category', 'image', 'is_up_for_review' ]
+    def __init__(self, *args, **kwargs):
+        category_queryset = kwargs.pop('category_queryset', None)
+        super().__init__(*args, **kwargs)
 
+        if category_queryset is not None:
+            self.fields['category'].queryset = category_queryset
 
 class Edit_news_Form(forms.ModelForm):
     title = forms.CharField(max_length = 50, required=True)
@@ -161,7 +170,18 @@ class Edit_draft_Form(forms.ModelForm):
         model = News_draft
         fields = ['title', 'tags', 'content', 'image', 'is_up_for_review' ]
 
+    def clean_image(self):
+        cleaned_data = super().clean()
+        image_changed = 'image' in self.changed_data
 
+        # Check if the image field has changed and if there is an old image
+        if image_changed and self.instance.image:
+            old_image_path = self.instance.image.path
+
+            # Delete the old image
+            default_storage.delete(old_image_path)
+
+        return cleaned_data['image']
 
 
 
@@ -200,7 +220,7 @@ class DraftsService():
         draft = None
         try:
             draft = News_draft.objects.get(id=draft_id)
-        except Exception as e: raise Http404("DB Error: Cant get user by id")
+        except Exception as e: raise Http404("DB Error: Cant get draft by user id")
         return draft
     
 
@@ -211,5 +231,16 @@ class DraftsService():
         except Exception as e: raise Http404("DB Error: Cant get draft by news id")
         return drafts
     
-
+    def getByCreatorId(self, user_id):
+        drafts = None
+        try:
+            drafts = News_draft.objects.filter(creator_id=user_id)
+        except Exception as e: raise Http404("DB Error: Cant get draft by creator id")
+        return drafts
+    
+    def getAllByCategory(self, categories):
+        try:
+            drafts = News_draft.objects.filter(category_id__in=categories)
+        except Exception as e: raise Http404("DB Error: Cant get news by category id")
+        return drafts
 

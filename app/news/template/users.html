@@ -4,9 +4,11 @@
 {% include "logged-nav.html" %}
 {% endblock %}
 {% block content %}
+
+
   <h1>User List</h1>
 
-  {% if users %}
+  {% if users.count != 1 %}
     <table class="table table-striped">
       <thead>
         <tr>

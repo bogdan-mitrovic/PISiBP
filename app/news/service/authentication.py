@@ -45,3 +45,33 @@ class CustomUserEditForm(forms.ModelForm):
     def clean_categories(self):
         # Ensure the categories field returns a list of category objects
         return list(self.cleaned_data.get('categories', []))
+
+
+
+class CustomJournalistEditForm(forms.ModelForm):
+    categories = forms.ModelMultipleChoiceField(queryset=Category.objects.all(), required=False, widget=forms.CheckboxSelectMultiple)
+
+    class Meta:
+        model = User
+        fields = ('categories',)
+    def __init__(self, *args, **kwargs):
+        editor_categories = kwargs.pop('editor_categories', None)
+        super().__init__(*args, **kwargs)
+
+        # Retrieve the user instance being edited
+        user_instance = kwargs.get('instance')
+
+        # Set initial values for categories based on user's existing privileges
+        if user_instance:
+            initial_categories = user_instance.user_profile.categories.all()
+            self.fields['categories'].initial = initial_categories
+
+        if editor_categories:
+            # Assume you have a way to identify the editor, such as a user type field
+            # Adjust this condition based on your actual user model structure
+            self.fields['categories'].queryset = editor_categories
+
+
+    def clean_categories(self):
+        # Ensure the categories field returns a list of category objects
+        return list(self.cleaned_data.get('categories', []))

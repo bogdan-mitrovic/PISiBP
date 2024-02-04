@@ -6,6 +6,9 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from taggit.managers import TaggableManager
 from django.contrib.contenttypes.fields import GenericRelation
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+
 # Create your models here.
 
 
@@ -42,6 +45,7 @@ class News(models.Model):
     image = models.ImageField(upload_to="image", null=True, blank=True)
     tags = TaggableManager()
     dislikes = models.IntegerField(default=0)
+    creator = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     like = GenericRelation('Likes')
     def __str__(self):
         return self.title
@@ -66,7 +70,6 @@ class News_draft(models.Model):
     tags = TaggableManager()
     draft_of = models.ForeignKey(News, null=True, on_delete=models.CASCADE)
     is_up_for_review = models.BooleanField(null=True)
-    is_approved = models.BooleanField(null=True, default = False)
     is_up_for_deletion = models.BooleanField(null=True, default = False)
     creator = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     was_seen_by_editor = models.BooleanField(null=True, default = False)
@@ -103,3 +106,9 @@ class Comment(models.Model):
 
 
 
+@receiver(pre_delete, sender=News)
+@receiver(pre_delete, sender=News_draft)
+def delete_news_image(sender, instance, **kwargs):
+    # Delete the associated image file when a News or NewsDraft object is deleted
+    if instance.image:
+        instance.image.delete(save=False)

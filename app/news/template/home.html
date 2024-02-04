@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 
-{% block navbar %}
-{% include "general-nav.html" %}
-{% endblock %}
 
+{% block navbar %}
+{% if user.is_authenticated %}
+  {% include "logged-nav.html" %}
+{% else %}
+  {% include "general-nav.html" %}
+{% endif %}
+{% endblock %}
 {% block content %}
         <div class="row">
             <div class="col-md-8">
@@ -18,12 +22,8 @@
                                 <img class="card-img-top thum-image" src="https://via.placeholder.com/150" alt="Card image cap">
                             {% endif %}
                             <div class="card-body">
-                            <div style="height:350px">
-                                <h5 class="card-title">{{item.title}}</h5>
-                                <p class="card-text">{{ item.content|safe }}</p>
-                            </div>
-                            <a href="{% url 'news-detail' item.id%}" class="btn btn-primary">Read More</a>
-                            </div>
+                            <div style="height:25px"> 
+                                <a href="{% url 'news-detail' item.id%}">{{item.title}}</a>
                         </div>
                     </div>
                     {% endfor %}
