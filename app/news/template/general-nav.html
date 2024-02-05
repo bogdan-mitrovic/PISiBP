@@ -2,10 +2,10 @@
 <div class="collapse navbar-collapse" id="navbarCollapse">
     <ul class="navbar-nav mr-auto">
         <li class="nav-item active">
-            <a class="nav-link" href={% url 'home' %}>Home <span class="sr-only">(current)</span></a>
+            <a class="nav-link" href={% url 'home' 1%}>Home <span class="sr-only">(current)</span></a>
         </li>
 
-        <form action="{% url 'combined-search' %}" method="get" class="form-inline">
+        <form action="{% url 'combined-search' 1%}" method="get" class="form-inline">
             <div class="dropdown">
                 <button class="btn btn-secondary dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Select Category
@@ -17,7 +17,7 @@
                 </div>
             </div>
             <input type="hidden" id="selectedCategory" name="cat" value="">
-            <input class="form-control mr-sm-2" name="search" type="search" placeholder="Keyword(title,tag,content)" aria-label="Search">
+            <input class="form-control mr-sm-2" name="search" type="search" placeholder="Keyword(title,tag)" aria-label="Search">
             
             <label for="selectedDate">From Date:</label>
             <input type="date" id="selectedDate1" name="date1">

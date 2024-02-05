@@ -1,33 +1,34 @@
-from django.http import Http404
-from django.shortcuts import get_object_or_404
-from django.db.models import Q
-from django.db.models import F
-from django.db.models import Count
-from django.utils import timezone
 from datetime import datetime
+
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django import forms
-from ..models import Category
-from ..models import News
-from ..models import News_draft
-from ..models import Likes
-from ..models import Comment
 from django.contrib.auth.models import User
-from tinymce.widgets import TinyMCE
 from django.core.files.storage import default_storage
+from django.db.models import Count, F, Q
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from tinymce.widgets import TinyMCE
+
+from .models import Category, Comment, News, News_draft
+
+news_per_page=15
 
 
+#used for queries on News
 class NewsService():
     def __init__(self):
         pass
 
-    def getAll(self):
+    def getbyPageId(self,page_id):
         news = None
         try:
             news = News.objects.all()
         except Exception as e: raise Http404("DB Error: Cant get all news")
-        return news
+        last_page = news.count() / news_per_page
+        page_id = last_page if page_id > last_page else page_id
+        news = news[news_per_page*(page_id-1)+1:news_per_page*page_id]
+        return news, last_page
     
     def getById(self, id):
         news = None
@@ -36,17 +37,11 @@ class NewsService():
         except Exception as e: raise Http404("DB Error: Cant get news by id")
         return news
     
-    def getAllByCategoryId(self, id):
-        try:
-            news = News.objects.filter(category_id=id)
-        except Exception as e: raise Http404("DB Error: Cant get news by category id")
-        return news
-
-    def search(self, keyword, id, date1, date2):
+    def search(self, keyword, id, date1, date2, page_id):
         news=News.objects.all()
         if keyword:
             try:
-                news = news.filter(Q(content__icontains=keyword) | Q(title__icontains=keyword) | Q(tags__name__icontains=keyword))
+                news = news.filter(Q(title__icontains=keyword) | Q(tags__name__icontains=keyword))
             except Exception as e: raise Http404("DB Error: cant get searched news")
 
         if id:
@@ -66,7 +61,10 @@ class NewsService():
                 news = news.filter(Q(publish_date__icontains=date1))
             except Exception as e: raise Http404("DB Error: Cant get news by date")
         news = news.distinct()
-        return news
+        last_page = news.count() / news_per_page
+        page_id = last_page if page_id > last_page else page_id
+        news = news[news_per_page*(page_id-1)+1:news_per_page*page_id]
+        return news, last_page
 
     def updateViewCount(self, news_id):
         try:
@@ -80,21 +78,8 @@ class NewsService():
             return news
         except Exception as e: raise Http404("DB Error: cant get the most commented news") 
 
-    def saveNewNews(self, form_data):
-        try:
-            cat = CategoryService().getByCategoryId(form_data["category_id"])
-            date = timezone.now()
-            """try:
-                image_file = form_data["image"]
-                image = Image(img=image_file)
-                image.save()
-            except Exception as e: raise Http404("Couldn't create/save image") 
-            """
-            news = News(title=form_data["title"], tags = form_data["tags"], content = form_data["content"], category = cat, publish_date=date)
-            news.save()
-        except Exception as e: raise Http404("DB Error: Could not save news") 
 
-
+#used for queries on Category
 class CategoryService():
     def __init__(self):
         pass
@@ -104,13 +89,8 @@ class CategoryService():
             categories = Category.objects.all()
         except Exception as e: raise Http404("DB Error: cant get all categories")
         return categories 
-    def getByCategoryId(self, category_id):
-        try:
-            category = Category.objects.get(id=category_id)
-        except Exception as e: raise Http404("DB Error: cant get category by category id")
-        return category 
-        
 
+#used for queries on Comment
 class CommentService():
     def __init__(self):
         pass
@@ -138,54 +118,8 @@ class CommentService():
         except Exception as e: raise Http404("DB Error: Could not save comment")
 
 
-class Add_news_Form(forms.ModelForm):
-    title = forms.CharField(max_length = 50, required=True)
-    content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
-    image = forms.ImageField(required=False)
-    is_up_for_review = forms.BooleanField(required=False)
-    class Meta:
-        model = News_draft
-        fields = ['title', 'tags', 'content', 'category', 'image', 'is_up_for_review' ]
-    def __init__(self, *args, **kwargs):
-        category_queryset = kwargs.pop('category_queryset', None)
-        super().__init__(*args, **kwargs)
 
-        if category_queryset is not None:
-            self.fields['category'].queryset = category_queryset
-
-class Edit_news_Form(forms.ModelForm):
-    title = forms.CharField(max_length = 50, required=True)
-    content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
-    image = forms.ImageField(required=False)
-    class Meta:
-        model = News
-        fields = ['title', 'tags', 'content', 'image']
-
-class Edit_draft_Form(forms.ModelForm):
-    title = forms.CharField(max_length = 50, required=True)
-    content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
-    image = forms.ImageField(required=False)
-    is_up_for_review = forms.BooleanField(required=False)
-    class Meta:
-        model = News_draft
-        fields = ['title', 'tags', 'content', 'image', 'is_up_for_review' ]
-
-    def clean_image(self):
-        cleaned_data = super().clean()
-        image_changed = 'image' in self.changed_data
-
-        # Check if the image field has changed and if there is an old image
-        if image_changed and self.instance.image:
-            old_image_path = self.instance.image.path
-
-            # Delete the old image
-            default_storage.delete(old_image_path)
-
-        return cleaned_data['image']
-
-
-
-
+#used for queries on Users
 class UsersService():
     def __init__(self):
         pass
@@ -204,17 +138,18 @@ class UsersService():
         except Exception as e: raise Http404("DB Error: Cant get user by id")
         return users
     
-
+    def getJournalists(self):
+        users = None
+        try:
+            users = User.objects.all()
+            users = users.filter(is_superuser = False, is_staff = False)
+        except Exception as e: raise Http404("DB Error: Cant get all users")
+        return users
+    
+#used for queries on News_draft
 class DraftsService():
     def __init__(self):
         pass
-
-    def getAll(self):
-        drafts = None
-        try:
-            drafts = News_draft.objects.all()
-        except Exception as e: raise Http404("DB Error: Cant get all drafts")
-        return drafts
     
     def getById(self, draft_id):
         draft = None
@@ -238,9 +173,60 @@ class DraftsService():
         except Exception as e: raise Http404("DB Error: Cant get draft by creator id")
         return drafts
     
-    def getAllByCategory(self, categories):
+    def getAll_Up_for_review(self):
+        drafts = None
+        try:
+            drafts = News_draft.objects.all()
+            drafts= drafts.filter(is_up_for_review = True)
+        except Exception as e: raise Http404("DB Error: Cant get all drafts")
+        return drafts
+    
+    def getAllByCategory_Up_for_review(self, categories):
         try:
             drafts = News_draft.objects.filter(category_id__in=categories)
+            drafts= drafts.filter(is_up_for_review = True)
         except Exception as e: raise Http404("DB Error: Cant get news by category id")
         return drafts
+    
 
+
+
+def get_like_identifier(request):
+    # Use a cookie to identify authenticated users
+    if request.user.is_authenticated:
+        return str(request.user.id)
+    else:
+        # For anonymous users, use a combination of IP address and a constant string
+        ip_address = get_client_ip(request)
+        constant_part = "anonymous_like_identifier"
+        like_identifier = f"{ip_address}-{constant_part}"
+
+        response = HttpResponse()
+        response.set_cookie('like_identifier', like_identifier)
+        return like_identifier
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+
+#way of putting news in "Trending"
+def getTrendingNews():
+    mostCommentedNews = NewsService().getRecentMostCommentedNews()
+    trending = []
+    for news in mostCommentedNews:
+        item = {}
+        item["id"] = news["news_id"]
+        item["title"] = news["news__title"]
+        score = news["news__views"] * 1 + news["total"] * 5
+        item["score"] = score
+        trending.append(item)
+
+    trending = sorted(trending, key=lambda k: k['score'], reverse=True) 
+
+    return trending[:5]

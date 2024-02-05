@@ -1,14 +1,14 @@
-from django.urls import path
-from django.contrib.auth import views as auth_views
-from django.conf.urls import include
 from django.conf import settings
+from django.conf.urls import include
 from django.conf.urls.static import static
+from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views
 
 urlpatterns = [
-    path('', views.home, name='home'),
-    path('health', views.health, name='health'),
+    path('', RedirectView.as_view(url='1', permanent=True)),
+    path('<int:page_id>/', views.home, name='home'),
     path('users/register',views.register_user,name='signup-page'),
     path('users/view',views.view_users,name='list-users'),
     path('users/delete/<int:user_id>',views.delete_user, name ='delete-user'),
@@ -28,7 +28,7 @@ urlpatterns = [
     path('pages/dislike/<int:news_id>', views.newsdislike, name='dislike-news'),
     path('pages/comment/like/<int:comment_id>', views.commentlike, name='like-comment'),
     path('pages/comment/dislike/<int:comment_id>', views.commentdislike, name='dislike-comment'),
-    path('pages/search', views.newssearch, name='combined-search'),
+    path('pages/search/<int:page_id>', views.newssearch, name='combined-search'),
     path('pages/comment', views.newscomment, name='news-comment'),
     path('change_password/', views.change_password, name='change_password'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

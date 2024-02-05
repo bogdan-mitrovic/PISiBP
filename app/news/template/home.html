@@ -10,14 +10,14 @@
 {% endblock %}
 {% block content %}
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-md-16">
                 <div class="row">
                     {% for item in news %}
-                    <div class="col-md-4">
-                        <div class="card m-1">
+                    <div class="col-md-16">
+                        <div class="card m-16">
                             <!--<img class="card-img-top" src="https://via.placeholder.com/150" alt="Card image cap">-->
                             {% if item.image %}
-                                <img class="card-img-top thum-image" src="/media/{{item.image}}" alt="Card image cap">
+                                <img class="card-img-top thum-image" src="{{item.image}}" alt="Card image cap">
                             {% else %}
                                 <img class="card-img-top thum-image" src="https://via.placeholder.com/150" alt="Card image cap">
                             {% endif %}

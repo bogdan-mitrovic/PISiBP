@@ -1,44 +1,32 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse, JsonResponse
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth import update_session_auth_hash
-from django.http import Http404
-from django.core import serializers
-from django import forms
-from django.utils import timezone
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponseRedirect
-from django.db.models import Q
-from .service.authentication import CustomUserCreationForm
-from .service.authentication import CustomUserEditForm
-from .service.authentication import CustomJournalistEditForm
-from .service.news_service import CategoryService
-from .service.news_service import NewsService
-from .service.news_service import CommentService
-from .service.news_service import UsersService
-from .service.news_service import DraftsService
-from .service.news_service import Add_news_Form
-from .service.news_service import Edit_news_Form
-from .service.news_service import Edit_draft_Form
-from .models import News
-from .models import News_draft
-from .models import Likes
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
-user_not_supported =  {"error":"User not supported"}
+from django.db.models import Q
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render, reverse
+from django.utils import timezone
+
+from .forms import (Add_news_Form, Comment_text_Form, CustomJournalistEditForm,
+                    CustomUserCreationForm, CustomUserEditForm,
+                    Edit_draft_Form, Edit_news_Form)
+from .helper_functions import (CategoryService, CommentService, DraftsService,
+                               NewsService, UsersService, get_like_identifier,
+                               getTrendingNews)
+from .models import Likes, News, News_draft
+
 method_not_supported = {"error":"method not supported"}
 invalid_form = {"error":"invalid form"}
 import os
-#### Controllers
-def health(request):
-    return HttpResponse("Application news portal Started", content_type="text/plain")
 
-def home(request):
+
+#basic view, home page
+def home(request,page_id=1):
         categories = CategoryService().getAll()
-        news = NewsService().getAll()
+        news, last_page = NewsService().getbyPageId(page_id)
         context = {
+            "last_page":last_page,
             "categories":categories,
             "trend":getTrendingNews(),
             "news":news,
@@ -46,6 +34,7 @@ def home(request):
         return render(request, 'home.html', context)
     
 
+#lists users, for the superuser
 def view_users(request):
     if request.user.is_authenticated and request.user.is_superuser:
         users = UsersService().getAll()
@@ -56,14 +45,13 @@ def view_users(request):
         }
         return render(request, 'users.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
     
 
-
+#lists journalists, for the editor
 def view_journalists(request):
     if request.user.is_authenticated and request.user.is_staff and not request.user.is_superuser:
-        users = UsersService().getAll()
-        users = users.filter(is_superuser = False, is_staff = False)
+        users = UsersService().getJournalists()
         categories = CategoryService().getAll()
         context = {
                 "categories":categories,
@@ -71,10 +59,10 @@ def view_journalists(request):
         }
         return render(request, 'journalists.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
     
 
-
+#enables an editor to manage a journalist's category privilege
 def edit_journalist(request, user_id):
     if request.user.is_authenticated and request.user.is_staff and not request.user.is_superuser:
         user = UsersService().getById(user_id)
@@ -86,7 +74,6 @@ def edit_journalist(request, user_id):
             if form.is_valid():
                 form.save()
                 user.user_profile.categories.set(form.clean_categories())
-                # Redirect or do other actions upon successful user edit
                 return redirect('list-journalists')
             else:
                 form_errors = dict([(field, [error for error in errors]) for field, errors in form.errors.items()])
@@ -103,21 +90,19 @@ def edit_journalist(request, user_id):
 
         return render(request, 'edit_journalists.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
     
 
-
+#filters the drafts to be listed, based on the user privileges
 def view_drafts(request):
     if request.user.is_authenticated:
         if request.user.is_superuser:
-            drafts = DraftsService().getAll()
-            drafts= drafts.filter(is_up_for_review = True)
+            drafts = DraftsService().getAll_Up_for_review()
         else:
             if not request.user.is_staff:
                 drafts = DraftsService().getByCreatorId(request.user.id)
             else:
-                drafts = DraftsService().getAllByCategory(request.user.user_profile.categories.all())
-                drafts= drafts.filter(is_up_for_review = True)
+                drafts = DraftsService().getAllByCategory_Up_for_review(request.user.user_profile.categories.all())
         categories = CategoryService().getAll()
         context = {
                 "categories":categories,
@@ -125,28 +110,25 @@ def view_drafts(request):
         }
         return render(request, 'drafts.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
 
 
-
+#used for creating a news_draftm to be reviewed, and later published
 def add(request):
     if request.user.is_authenticated and not request.user.is_staff and not request.user.is_superuser:
         categories = request.user.user_profile.categories.all()
         if request.method == 'POST':
             form = Add_news_Form(request.POST, request.FILES, category_queryset=categories)
             if form.is_valid():
-                # Process the form data
-                # Access form data using form.cleaned_data dictionary
                 news=form.save(commit=False)
 
-                # Add your logic here
                 date = timezone.now()
                 news.publish_date = date
                 news.creator = request.user
                 news.save()
                 news.tags.set(form.cleaned_data['tags'])
-                return redirect('home')
+                return redirect(reverse('home', args=[1]))
             else:
                 form_errors = dict([(field, [error for error in errors]) for field, errors in form.errors.items()])
                 context = {'form': form, 'form_errors': form_errors}
@@ -159,9 +141,12 @@ def add(request):
         }
         return render(request, 'add_news.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
 
+
+
+#used for deletion of news
 def delete(request, news_id):
     news = NewsService().getById(news_id)
     if request.user.is_superuser or request.user.is_staff:
@@ -176,11 +161,11 @@ def delete(request, news_id):
             try:
                 draft.save()
             except Exception as e: raise Http404("DB Error: Cant create draft")
-    return redirect('home')
+    return redirect(reverse('home', args=[1]))
 
 
 
-
+#used when a superuser wants to delete another user
 def delete_user(request, user_id):
     if request.user.is_authenticated and request.user.is_superuser:
         user = UsersService().getById(user_id)
@@ -189,10 +174,10 @@ def delete_user(request, user_id):
         except Exception as e: raise Http404("DB Error: Cant delete user")
         return redirect('list-users')
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
     
 
-
+#used when a news_draft is deleted by his creator, or one of the editors
 def delete_draft(request, draft_id):
     draft = DraftsService().getById(draft_id)
     if request.user.is_authenticated and (request.user.is_superuser or draft.creator==request.user or (request.user.is_staff and draft.is_up_for_review and (draft.category in request.user.user_profile.categories.all()))):
@@ -202,8 +187,10 @@ def delete_draft(request, draft_id):
         except Exception as e: raise Http404("DB Error: Cant delete draft")
         return redirect('list-drafts')
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
+
+#used when a superuser changes the privileges of another user
 def edit_user(request, user_id):
     if request.user.is_authenticated and request.user.is_superuser:
         user = UsersService().getById(user_id)
@@ -214,7 +201,6 @@ def edit_user(request, user_id):
             if form.is_valid():
                 form.save()
                 user.user_profile.categories.set(form.clean_categories())
-                # Redirect or do other actions upon successful user edit
                 return redirect('list-users')
             else:
                 form_errors = dict([(field, [error for error in errors]) for field, errors in form.errors.items()])
@@ -230,9 +216,11 @@ def edit_user(request, user_id):
 
         return render(request, 'edit_user.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
 
+
+#used when an authenticated user wants to change the password given by superuser
 def change_password(request):
     if request.user.is_authenticated:
         if request.method == 'POST':
@@ -241,7 +229,7 @@ def change_password(request):
                 user = form.save()
                 # Ensure the user stays logged in by updating the session hash
                 update_session_auth_hash(request, user)
-                return redirect('home')  # Replace 'profile' with the desired success redirect
+                return redirect(reverse('home', args=[1])) 
             else:
                 form_errors = dict([(field, [error for error in errors]) for field, errors in form.errors.items()])
                 context = {'form': form, 'form_errors': form_errors}
@@ -251,19 +239,18 @@ def change_password(request):
         
         return render(request, 'change_password.html', {'form': form})
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
 
 
-
+#used when the superuser wants to register another user into the system
 def register_user(request):
     if request.user.is_authenticated and request.user.is_superuser:
         if request.method == 'POST':
             form = CustomUserCreationForm(request.POST)
             if form.is_valid():
                 form.save()
-                # Redirect or do other actions upon successful registration
-                return redirect('home')
+                return redirect(reverse('home', args=[1]))
             else:
                 form_errors = dict([(field, [error for error in errors]) for field, errors in form.errors.items()])
                 context = {'form': form, 'form_errors': form_errors}
@@ -273,23 +260,22 @@ def register_user(request):
 
         return render(request, 'signup.html', {'form': form})
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
 
 
+#used when a journalists wants to suggest an edit of one of his news
 def edit(request, news_id):
     news = NewsService().getById(news_id)
     if request.user.is_authenticated and not request.user.is_superuser and not request.user.is_staff and news.creator==request.user :
         if request.method == 'POST':
                 form = Edit_news_Form(request.POST, request.FILES, instance=news)
                 if form.is_valid():
-                    # Process the form data
-                    # Access form data using form.cleaned_data dictionary
                     news_tmp = form.save(commit=False)
                     draft = News_draft(title=news_tmp.title, content=news_tmp.content, image=news_tmp.image, draft_of = news, is_up_for_review = True , creator = request.user, category=news.category)
                     draft.save()
                     draft.tags.set(form.cleaned_data['tags'])
-                    return redirect('home')
+                    return redirect(reverse('home', args=[1]))
                 else:
                         form_errors = dict([(field, [error for error in errors]) for field, errors in form.errors.items()])
                         context = {'form': form, 'form_errors': form_errors}
@@ -302,14 +288,14 @@ def edit(request, news_id):
             }
             return render(request, 'edit_news.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
 
 
 
 
 
-
+#used when a journalists edits one of his drafts
 def edit_draft(request, draft_id):
     draft = DraftsService().getById(draft_id)
     if request.user.is_authenticated and not request.user.is_superuser and not request.user.is_staff and draft.creator==request.user :
@@ -317,15 +303,11 @@ def edit_draft(request, draft_id):
         if request.method == 'POST':
                 form = Edit_draft_Form(request.POST, request.FILES, instance=draft)
                 if form.is_valid():
-                    # Check if the image in the form is different from the existing image
-                # Check if the image in the form is different from the existing image
-
-
                     form.save()
                     draft.tags.set(form.cleaned_data['tags'])
                     draft.was_seen_by_editor = False
                     draft.save()
-                    return redirect('home')
+                    return redirect(reverse('home', args=[1]))
                 else:
                         form_errors = dict([(field, [error for error in errors]) for field, errors in form.errors.items()])
                         context = {'form': form, 'form_errors': form_errors}
@@ -338,14 +320,14 @@ def edit_draft(request, draft_id):
             }
             return render(request, 'edit_draft.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
 
 
 
 
 
-
+#used when displaying the content of a draft
 def draftdetail(request, draft_id):
     draft = DraftsService().getById(draft_id)
     if request.user.is_authenticated and (request.user.is_superuser or draft.creator==request.user or (request.user.is_staff and draft.is_up_for_review and (draft.category in request.user.user_profile.categories.all()))):
@@ -357,15 +339,14 @@ def draftdetail(request, draft_id):
             "categories":categories,
             "draft":draft,
         }
-        #return JsonResponse(list(comments), safe=False)
         return render(request, 'draft_content.html', context)
     else:
-        return redirect('home')
+        return redirect(reverse('home', args=[1]))
 
 
 
 
-
+#used when an editor approves a request made by a journalist
 def approve_draft(request, draft_id):
     draft = DraftsService().getById(draft_id)
     if request.user.is_authenticated and (request.user.is_superuser  or (request.user.is_staff and draft.is_up_for_review and (draft.category in request.user.user_profile.categories.all()))):
@@ -415,24 +396,27 @@ def approve_draft(request, draft_id):
                     
                 except Exception as e: raise Http404("DB Error: Cant delete news")
         
-    return redirect('home')
+    return redirect(reverse('home', args=[1]))
 
 
 
 
 
 
-
+#used when displaying the content of a news article
 def newsdetail(request, news_id):
     news = NewsService().getById(news_id)
     comments = CommentService().getByNewsId(news_id)
-    form = MessageForm(initial={'news_id':news_id})
-    users_edit = news.creator
-    users_delete = UsersService().getAll().filter(
-        Q(is_superuser=True) |
-        Q(Q(user_profile__categories=news.category) & Q(is_staff=True)) |
-        Q(id=news.creator.id)
-    )
+    form = Comment_text_Form(initial={'news_id':news_id})
+    users_edit = None
+    users_delete = None
+    if news.creator:
+        users_edit = news.creator if not news.creator.is_staff else None
+        users_delete = UsersService().getAll().filter(
+            Q(is_superuser=True) |
+            Q(Q(user_profile__categories=news.category) & Q(is_staff=True)) |
+            Q(id=news.creator.id)
+        )
 
     NewsService().updateViewCount(news_id)
     news.views = news.views +1
@@ -446,15 +430,14 @@ def newsdetail(request, news_id):
         "form":form,
         "trend":getTrendingNews()
     }
-    #return JsonResponse(list(comments), safe=False)
     return render(request, 'content.html', context)
 
 
+#used when an user makes a comment on a news article
 def newscomment(request):
     if(request.method=="POST"):
-        form = MessageForm(request.POST)
+        form = Comment_text_Form(request.POST)
         if form.is_valid():
-            #print("break point 1")
             form_data = dict(form.cleaned_data)
             if not request.user.is_authenticated and "tmp_username" in request.POST:
                 form_data["tmp_username"] = request.POST["tmp_username"] 
@@ -464,17 +447,20 @@ def newscomment(request):
                 return JsonResponse(invalid_form, safe=False) 
     else:
         return JsonResponse(method_not_supported, safe=False)
+    
 
-def newssearch(request):
+
+
+#used when searching through news articles database
+def newssearch(request, page_id=1):
     search_key = request.GET.get('search')
     category_id = request.GET.get('cat')
     date1 = request.GET.get('date1')
     date2 = request.GET.get('date2')
-    news = NewsService().search(search_key, category_id, date1, date2)
-
-    #print(news)
-    categories = getCategory(request)
+    news, last_page = NewsService().search(search_key, category_id, date1, date2, page_id)
+    categories = CategoryService().getAll()
     context = {
+        "last_page":last_page,
         "categories":categories,
         "news":news,
         "trend":getTrendingNews()
@@ -484,32 +470,11 @@ def newssearch(request):
 
 
 
-def getTrendingNews():
-    mostCommentedNews = NewsService().getRecentMostCommentedNews()
-    #print(mostCommentedNews)
-    trending = []
-    for news in mostCommentedNews:
-        item = {}
-        item["id"] = news["news_id"]
-        item["title"] = news["news__title"]
-        score = news["news__views"] * 1 + news["total"] * 5
-        item["score"] = score
-        trending.append(item)
 
-    trending = sorted(trending, key=lambda k: k['score'], reverse=True) 
 
-    return trending[:5]
 
-def getCategory(request):
-    return CategoryService().getAll()
-
-class MessageForm(forms.Form):
-    text = forms.CharField(widget=forms.Textarea ,  label='Comment', max_length=100)
-    news_id = forms.CharField()
-    text.widget.attrs.update({'class':'form-control', 'rows':'5'})
-    news_id.widget = forms.HiddenInput()
-
-    
+#The next 4 are very similar
+#Used when an user likes/dislikes a news or a comment object
 
 def newslike(request, news_id):
     news = NewsService().getById(news_id)
@@ -631,24 +596,3 @@ def commentdislike(request, comment_id):
     return redirect('news-detail', news_id = comment.news_id)
 
 
-def get_like_identifier(request):
-    # Use a cookie to identify authenticated users
-    if request.user.is_authenticated:
-        return str(request.user.id)
-    else:
-        # For anonymous users, use a combination of IP address and a constant string
-        ip_address = get_client_ip(request)
-        constant_part = "anonymous_like_identifier"
-        like_identifier = f"{ip_address}-{constant_part}"
-
-        response = HttpResponse()
-        response.set_cookie('like_identifier', like_identifier)
-        return like_identifier
-
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip

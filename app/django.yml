@@ -1,4 +1,4 @@
-name: djangoo
+name: django
 channels:
   - defaults
 dependencies:
@@ -55,3 +55,4 @@ dependencies:
       - sqlparse==0.4.4
       - typing-extensions==4.7.1
       - urllib3==1.23
+
