@@ -25,10 +25,13 @@ class NewsService():
         try:
             news = News.objects.all()
         except Exception as e: raise Http404("DB Error: Cant get all news")
-        last_page = news.count() / news_per_page
-        page_id = last_page if page_id > last_page else page_id
-        news = news[news_per_page*(page_id-1)+1:news_per_page*page_id]
-        return news, last_page
+        if news:
+            last_page = news.count() / news_per_page
+            page_id = last_page if page_id > last_page else page_id
+            news = news[news_per_page*(page_id-1)+1:news_per_page*page_id]
+            return news, last_page
+        else:
+            return news,1
     
     def getById(self, id):
         news = None
@@ -60,11 +63,14 @@ class NewsService():
             try:
                 news = news.filter(Q(publish_date__icontains=date1))
             except Exception as e: raise Http404("DB Error: Cant get news by date")
-        news = news.distinct()
-        last_page = news.count() / news_per_page
-        page_id = last_page if page_id > last_page else page_id
-        news = news[news_per_page*(page_id-1)+1:news_per_page*page_id]
-        return news, last_page
+        if news:
+            news = news.distinct()
+            last_page = news.count() / news_per_page
+            page_id = last_page if page_id > last_page else page_id
+            news = news[news_per_page*(page_id-1)+1:news_per_page*page_id]
+            return news, last_page
+        else:
+            return news,1
 
     def updateViewCount(self, news_id):
         try:
