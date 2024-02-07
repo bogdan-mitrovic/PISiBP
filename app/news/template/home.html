@@ -17,7 +17,12 @@
                         <div class="card m-16">
                             <!--<img class="card-img-top" src="https://via.placeholder.com/150" alt="Card image cap">-->
                             {% if item.image %}
-                                <img class="card-img-top thum-image" src="{{item.image}}" alt="Card image cap">
+                                {% if item.image|stringformat:"s"|slice:":5" == "image" %}
+                                    <img class="card-img-top thum-image" src="/media/{{item.image}}" alt="Card image cap">
+                                {% else %}
+                
+                                    <img class="card-img-top thum-image" src="{{item.image}}" alt="Card image cap">
+                                {% endif %}
                             {% else %}
                                 <img class="card-img-top thum-image" src="https://via.placeholder.com/150" alt="Card image cap">
                             {% endif %}
