@@ -3,7 +3,18 @@ import os
 import sys
 
 if __name__ == '__main__':
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
+    # Set default settings module
+    settings_module = 'mysite.settings'  # Default to Docker settings
+
+    # Check if "-l" flag is passed to use local settings
+    if '-l' in sys.argv:
+        settings_module = 'mysite.settings_local'
+        # Remove the flag from sys.argv to avoid confusing Django's execute_from_command_line
+        sys.argv.remove('-l')
+
+    # Set the Django settings module
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

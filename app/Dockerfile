@@ -1,13 +1,25 @@
+# Use an official Python runtime as a parent image
 FROM python:3.7.9
 
+# Set environment variables
 ENV PYTHONUNBUFFERED 1
+ENV DJANGO_SETTINGS_MODULE mysite.settings
 
-WORKDIR /app 
+# Create and set the working directory
+WORKDIR /app
 
-ADD . /app
+# Copy the requirements file into the container at /app
+COPY requirement.txt /app/
 
-COPY ./requirement.txt /app/requirement.txt
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirement.txt
+# Copy the current directory contents into the container at /app
+COPY . /app/
 
-RUN pip install -r requirement.txt
+# Make port 8000 available to the world outside this container
+EXPOSE 8000
 
-COPY . /app
+# Define the command to run on container start
+# Run the Django development server
+CMD ["sh", "-c", "python /app/manage.py migrate && python /app/manage.py createsuperuser && python /app/manage.py runserver 0.0.0.0:8000"]
+
