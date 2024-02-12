@@ -52,9 +52,10 @@ class NewsService():
                 news = news.filter(category_id=id)
             except Exception as e: raise Http404("DB Error: Cant get news by category id")
 
-        start_date= datetime.strptime(date1, '%Y-%m-%d') if date1 else datetime(1970, 1, 1)
-        end_date = datetime.strptime(date2, '%Y-%m-%d') if date2 else datetime.now()
 
+
+        start_date=  timezone.make_aware(datetime.strptime(date1, '%Y-%m-%d')) if date1 else timezone.make_aware(datetime.strptime('1970-1-1', '%Y-%m-%d'))
+        end_date = timezone.make_aware(datetime.strptime(date2, '%Y-%m-%d')) if date2 else timezone.make_aware(datetime.now())
         if start_date != end_date:
             try:
                  news = news.filter(publish_date__range=[start_date, end_date])

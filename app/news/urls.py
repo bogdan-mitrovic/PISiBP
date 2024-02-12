@@ -7,8 +7,8 @@ from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
-    path('', RedirectView.as_view(url='1', permanent=True)),
-    path('1', views.home, name='home login'),
+    path('', RedirectView.as_view(url='1/', permanent=True)),
+    path('1/', views.home, name='home login'),
     path('<int:page_id>/', views.home, name='home'),
     path('users/register',views.register_user,name='signup-page'),
     path('users/view',views.view_users,name='list-users'),
