@@ -8,10 +8,10 @@ from . import views
 
 urlpatterns = [
     path('', RedirectView.as_view(url='1', permanent=True)),
-    path('1', views.home, name='home login'),
+    path('1/', views.home, name='home login'),
     path('<int:page_id>/', views.home, name='home'),
-    path('health', views.health, name='health'),
     path('users/register',views.register_user,name='signup-page'),
+    path('health', views.health, name='health'),
     path('users/view',views.view_users,name='list-users'),
     path('users/delete/<int:user_id>',views.delete_user, name ='delete-user'),
     path('users/edit/<int:user_id>',views.edit_user, name ='edit-user'),

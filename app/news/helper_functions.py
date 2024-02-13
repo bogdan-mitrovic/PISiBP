@@ -9,7 +9,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from tinymce.widgets import TinyMCE
-
+import math
 from .models import Category, Comment, News, News_draft
 
 news_per_page=15
@@ -26,7 +26,7 @@ class NewsService():
             news = News.objects.all()
         except Exception as e: raise Http404("DB Error: Cant get all news")
         if news and news.count()>=news_per_page:
-            last_page = news.count() / news_per_page
+            last_page = news.count() // news_per_page
             page_id = last_page if page_id > last_page else page_id
             news = news[news_per_page*(page_id-1):news_per_page*page_id]
             return news, last_page
@@ -52,8 +52,8 @@ class NewsService():
                 news = news.filter(category_id=id)
             except Exception as e: raise Http404("DB Error: Cant get news by category id")
 
-        start_date= datetime.strptime(date1, '%Y-%m-%d') if date1 else datetime(1970, 1, 1)
-        end_date = datetime.strptime(date2, '%Y-%m-%d') if date2 else datetime.now()
+        start_date=  timezone.make_aware(datetime.strptime(date1, '%Y-%m-%d')) if date1 else timezone.make_aware(datetime.strptime('1970-1-1', '%Y-%m-%d'))
+        end_date = timezone.make_aware(datetime.strptime(date2, '%Y-%m-%d')) if date2 else timezone.make_aware(datetime.now())
 
         if start_date != end_date:
             try:
@@ -65,8 +65,7 @@ class NewsService():
             except Exception as e: raise Http404("DB Error: Cant get news by date")
         news = news.distinct()
         if news and news.count()>=news_per_page:
-            
-            last_page = news.count() / news_per_page
+            last_page = math.ceil(news.count() / news_per_page)
             page_id = last_page if page_id > last_page else page_id
             news = news[news_per_page*(page_id-1):news_per_page*page_id]
             return news, last_page

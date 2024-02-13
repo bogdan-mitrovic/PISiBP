@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 
-
 {% block navbar %}
 {% if user.is_authenticated %}
   {% include "logged-nav.html" %}
@@ -8,39 +7,253 @@
   {% include "general-nav.html" %}
 {% endif %}
 {% endblock %}
+
 {% block content %}
-        <div class="row">
-            <div class="col-md-16">
-                <div class="row">
-                    {% for item in news %}
-                    <div class="col-md-16">
-                        <div class="card m-16">
-                            <!--<img class="card-img-top" src="https://via.placeholder.com/150" alt="Card image cap">-->
-                            {% if item.image %}
-                                {% if item.image|stringformat:"s"|slice:":5" == "image" %}
-                                    <img class="card-img-top thum-image" src="/media/{{item.image}}" alt="Card image cap">
-                                {% else %}
+<style>
+  .card {
+    height: 95%;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    border-color: #113fa2;
+  }
+
+  .card-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(255, 255, 255);
+    color: white;
+  }
+
+  .card-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-footer {
+    margin-bottom: auto;
+  }
+
+  .card-image {
+    max-height: 200px;
+    width: auto;
+    
+    
+ 
+  }
+
+  /*paginacija*/
+ 
+  #pagination ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  #pagination li {
+    color: #fff;
+    display: flex;
+    margin: 5px;
+  }
+
+  #pagination a {
+    text-decoration: none;
+    padding: 10px 15px;
+    background-color: #113fa2;
+    border: 2px solid rgb(0, 0, 0);
+    border-right: 0;
+    color: white;
+    transition: background-color 0.3s;
+  }
+
+  #pagination a:hover {
+    background-color: #2082e5;
+  }
+
+  #pagination li.active a {
+    background-color: #2082e5;
+  }
+
+  #pagination li:first-child a {
+    border-radius: 5px 0 0 5px;
+  }
+
+  #pagination li:last-child a {
+    border-right: 2px solid aquamarine;
+    border-radius: 0 5px 5px 0;
+  }
+
+  #pagination li.previous,
+  #pagination li.next {
+    animation: fadein .5s;
+  }
+
+  #pagination li.out-of-range a {
+    color: #666;
+  }
+
+  #pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+#pagination .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: 0; /* Dodajte margin: 0 kako biste eliminisali eventualne preostale margin-left ili margin-right vrednosti koje mogu uticati na centriranje. */
+}
+</style>
+
+<div class="row">
+    <div class="col-md-10">
+        
+      <div style="margin-bottom: 15px; height: 50px; width: 938px ;border: 2px solid #113fa2; text-align: center; font-size: xx-large; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; font-weight: 500;  background-color: #ffffff !important; ">
+        <p> ŠOKANTNE VESTI</p>
+      </div>  
+      
+      <div class="row">
+            <div class="col-md-12">
+                <!-- News Ticker -->
                 
-                                    <img class="card-img-top thum-image" src="{{item.image}}" alt="Card image cap">
-                                {% endif %}
-                            {% else %}
-                                <img class="card-img-top thum-image" src="https://via.placeholder.com/150" alt="Card image cap">
-                            {% endif %}
-                            <div class="card-body">
-                            <div style="height:25px"> 
-                                <a href="{% url 'news-detail' item.id%}">{{item.title}}</a>
-                        </div>
+            </div>
+            {% for item in news %}
+            <div class="col-md-4" style="height: auto; margin-bottom: 20px; ">
+                <div class="card m-1" style="height: 363px; position: relative;">
+                    <div class="card-image">
+                      {% if item.image %}
+                      {% if item.image|stringformat:"s"|slice:":5" == "image" %}
+                          <img class="card-img-top thum-image" src="/media/{{item.image}}" alt="Card image cap">
+                      {% else %}
+      
+                          <img class="card-img-top thum-image" src="{{item.image}}" alt="Card image cap">
+                      {% endif %}
+                  {% else %}
+                      <img class="card-img-top thum-image" src="https://via.placeholder.com/150" alt="Card image cap">
+                  {% endif %}
                     </div>
-                    {% endfor %}
+                    <div class="card-body">
+                        <a href="{% url 'news-detail' item.id%}" class="card-title" style="color: #113fa2; font-size: x-large;">{{item.title | truncatechars:55}}</a>
+                    </div>
+                    <div class="category-badge">
+                        <p class="card-text" style="color: #fff; position: absolute; bottom: 0; left: 0; background-color: #113fa2; padding: 5px 10px; margin: 0; font-size: larger;">{{ item.category.name }}</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <ul class="list-group">
-                    <li class="list-group-item">Trending Articles</li>
-                    {% for item in trend %}
-                    <li class="list-group-item"><a href="{% url 'news-detail' item.id%} ">{{item.title}}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
+            {% endfor %}
         </div>
+
+        <div style="margin-bottom:  15px; height: 50px; width: 938px ;border: 2px solid #113fa2; text-align: center; font-size: xx-large; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; font-weight: 500;  background-color: #ffffff !important; ">
+          <p> SKANDALOZNO</p>
+        </div>  
+        <div id="pagination" style="margin-bottom: 10px;"></div>
+    </div>
+
+    <div class="col-md-2">
+        <ul class="list-group">
+            <li class="list-group-item">Popularne vesti</li>
+            {% for item in trend %}
+            <li class="list-group-item"><a href="{% url 'news-detail' item.id%} ">{{item.title}}</a></li>
+            {% endfor %}
+        </ul>
+
+        
+      </div>
+
+</div>
+    
+
+
+</div>
+
+<script>
+  // Assuming you have a variable `lastPage` available to store the last page number
+  let lastPage = "{{last_page}}"; // Replace with the actual value
+
+  var url = window.location.href;
+  // Find the index of '8000/'
+  var startIndex = url.indexOf('8000/') + 5;
+
+  // Extract the substring starting from the index after '8000/'
+  var substring = url.substring(startIndex);
+
+  // Use a regular expression to match the first integer
+  var match = substring.match(/\d+/);
+
+  // Check if a match is found
+  if (match) {
+    // Convert the matched string to an integer
+    var firstIntegerAfter8000 = parseInt(match[0]);
+
+    document.getElementById('pagination').innerHTML = createPagination(lastPage, firstIntegerAfter8000);
+  }
+
+  function redirectToPage(page) {
+    // Get the current URL
+    let currentUrl = window.location.href;
+
+    // Check if the current URL contains a '?'
+    if (currentUrl.includes('?')) {
+      // Replace the page number before the "?" with the new page value parameter
+      currentUrl = currentUrl.replace(/\/(\d+)\?/, '/' + page + '?');
+    } else {
+      // Replace the last integer in the URL with the page value parameter
+      currentUrl = currentUrl.replace(/\/\d+\/$/, '/' + page + '/');
+    }
+
+    // Redirect to the new URL
+    window.location.href = currentUrl;
+  }
+
+  function createPagination(pages, currentPage) {
+    let str = '<ul>';
+    let active;
+
+    // Show the Previous button only if you are on a page other than the first
+    if (currentPage > 1) {
+      str += '<li class="page-item previous no"><a onclick="redirectToPage(' + (currentPage - 1) + ')">Previous</a></li>';
+    }
+
+    // Show the first page
+    str += '<li class="page-item ' + (currentPage === 1 ? "active" : "no") + '"><a onclick="redirectToPage(1)">1</a></li>';
+
+    // Show two pages before the current page
+    if (currentPage > 3) {
+      str += '<li class="out-of-range"><a onclick="createPagination(pages, ' + (currentPage - 2) + ')">...</a></li>';
+    }
+
+    for (let p = Math.max(2, currentPage - 2); p <= Math.min(pages - 1, currentPage + 2); p++) {
+      active = currentPage === p ? "active" : "no";
+      str += '<li class="page-item ' + active + '"><a onclick="redirectToPage(' + p + ')">' + p + '</a></li>';
+    }
+
+    // Show two pages after the current page
+    if (currentPage < pages - 2) {
+      str += '<li class="out-of-range"><a onclick="createPagination(pages, ' + (currentPage + 2) + ')">...</a></li>';
+    }
+
+    // Show the last page
+    str += '<li class="page-item ' + (currentPage === pages ? "active" : "no") + '"><a onclick="redirectToPage(' + pages + ')">' + pages + '</a></li>';
+
+    // Show the Next button only if you are on a page other than the last
+    if (currentPage < pages) {
+      str += '<li class="page-item next no"><a onclick="redirectToPage(' + (currentPage + 1) + ')">Next</a></li>';
+    }
+
+    str += '</ul>';
+    // Return the pagination string to be outputted in the HTML
+    return str;
+  }
+</script>
+
+
+
 {% endblock %}
