@@ -1,65 +1,177 @@
-<nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
-<div class="collapse navbar-collapse" id="navbarCollapse">
-    <ul class="navbar-nav mr-auto">
-    <li class="nav-item active">
-        <a class="nav-link" href={% url 'home' 1%}>Home <span class="sr-only">(current)</span></a>
-    </li>
-    <form action="{% url 'combined-search' 1%}" method="get" class="form-inline">
-        <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Select Category
-            </button>
-            <div class="dropdown-menu" aria-labelledby="categoryDropdown">
-                {% for category in categories %}
-                    <a class="dropdown-item" href="#" onclick="document.getElementById('selectedCategory').value='{{ category.id }}';">{{ category.name }}</a>
-                {% endfor %}
-            </div>
+<style>
+    .tickerWrap {
+    margin-top: 0;
+    margin-bottom:30px;
+    overflow: hidden;
+    position: relative;
+    height: 50px;
+    background-color: white;
+    color: black;
+  }
+
+  .tickerLatest {
+    font-size: 18px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    cursor: pointer;
+  }
+
+  .headerTicker ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+  }
+
+  .headerTicker li {
+    margin-right: 20px;
+    white-space: nowrap;
+    margin-bottom: 30px;
+  }
+
+  @keyframes ticker {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+.headerTicker:hover ul {
+    -webkit-animation-play-state: paused;
+    animation-play-state: paused
+}
+
+.headerTicker ul {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -ms-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    height: 46px;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-animation: ticker 50s infinite linear;
+    animation: ticker 50s infinite linear
+}
+
+</style>
+
+
+
+<nav class="navbar navbar-expand-md navbar-dark bg-faded mb-0" style="background-color: #113fa2 !important; height: auto; color: azure; height: auto; font-size: x-large; ">    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href={% url 'home' 1 %}>Početna <span class="sr-only">(current)</span></a>
+            </li>
+                <a class="nav-link" href={% url 'logout' %}>Odjavi se</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href={% url 'change_password' %}>Promeni lozinku</a>
+            </li>
+            {% if user.is_superuser %}
+            <li class="nav-item">
+                <a class="nav-link" href={% url 'signup-page' %}>Registruj korisnika</a>
+            </li>
+            {% endif %}
+            {% if not user.is_superuser and not user.is_staff %}
+            <li class="nav-item">
+                <a class="nav-link" href={% url 'add-news-page' %}>Dodaj vest</a>
+            </li>
+            {% endif %}
+            {% if user.is_superuser %}
+            <li class="nav-item">
+                <a class="nav-link" href={% url 'list-users' %}>Korisnici</a>
+            </li>
+            {% endif %}
+            {% if not user.is_superuser and user.is_staff %}
+            <li class="nav-item">
+                <a class="nav-link" href={% url 'list-journalists' %}>Novinari</a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a class="nav-link" href={% url 'list-drafts' %}>Nacrt</a>
+            </li>
+        </ul>
+        <div>
+            <form action="{% url 'combined-search' 1%}" method="get" class="form-inline">
+                <div class="dropdown">
+                    <button class="btn btn-primary" type="button" id="searchIcon" data-toggle="modal" data-target="#searchModal">
+                        <i class="fas fa-search"></i> 
+                    </button>
+                </div>
+
+                <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h2 class="modal-title" style="color: #0d0d0e;" id="searchModalLabel">Pretraga</h2>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body text-center"> 
+
+                                <form action="{% url 'combined-search' 1%}" method="get" class="form-inline">
+
+                                    <div class="dropdown">
+                                        <button class="btn btn-primary dropdown-toggle" type="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Izaberite kategoriju
+                                        </button>
+                                        <div class="dropdown-menu" style="left: 150px;" aria-labelledby="categoryDropdown">
+                                            {% for category in categories %}
+                                                <a class="dropdown-item" href="#" onclick="document.getElementById('selectedCategory').value='{{ category.id }}';">{{ category.name }}</a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="hidden" id="selectedCategory" name="cat" value="">
+                                    <h5 style="color: #010101;">Ukucaj ključnu reč za pretragu:</h5>
+                                    <input class="form-control mr-sm-2" name="search" type="search" placeholder="Kljucna rec" aria-label="Search">
+                                    <br>
+                                    <h4 style="color: #0b0b0b;">Od datuma:</h4>
+                                    
+                                    <input type="date" id="selectedDate1" name="date1">
+                                    <h4 style="color: #0f1010;">Do datuma:</h4>
+                                    <input type="date" id="selectedDate2" name="date2">
+                                    <br>
+                                    <button class="btn btn-primary my-2 my-sm-0" type="submit">Pretraži</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
-        <input type="hidden" id="selectedCategory" name="cat" value="">
-        <input class="form-control mr-sm-2" name="search" type="search" placeholder="Keyword(title,tag)" aria-label="Search">
-        
-        <label for="selectedDate">From Date:</label>
-        <input type="date" id="selectedDate1" name="date1">
+    </div>
 
-        <label for="selectedDate">To Date:</label>
-        <input type="date" id="selectedDate2" name="date2">
-        
-        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-    </form>
-    <li class="nav-item">
-        <a class="nav-link" href={% url 'logout' %}>Signout</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href={% url 'change_password' %}>Change Password</a>
-    </li>
-    {% if user.is_superuser %}
-    <li class="nav-item">
-        <a class="nav-link" href={% url 'signup-page' %}>Register a user</a>
-    </li>
-    {% endif %}
-
-
-    {% if not user.is_superuser and not user.is_staff %}
-    <li class="nav-item">
-        <a class="nav-link" href={% url 'add-news-page' %}>Add an article</a>
-    </li>
-    {% endif %}
-
-    {% if user.is_superuser %}
-    <li class="nav-item">
-        <a class="nav-link" href={% url 'list-users' %}>Users</a>
-    </li>
-    {% endif %}
-
-    {% if not user.is_superuser and user.is_staff %}
-    <li class="nav-item">
-        <a class="nav-link" href={% url 'list-journalists' %}>Journalists</a>
-    </li>
-    {% endif %}
     
-    <li class="nav-item">
-        <a class="nav-link" href={% url 'list-drafts' %}>Drafts</a>
-    </li>
-    </ul>
-</div>
 </nav>
+<div class="tickerWrap" style="margin-top: 0;">
+    <h2 class="tickerLatest"><a href="/najnovije-vesti"><span>Najnovije vesti</span></a></h2>
+    <div class="headerTicker">
+        <ul>
+            <!-- Add your news items here -->
+            <li><a href="https://youtube.com/watch?v=PKHYxbUmhpM">SKANDALOZNO Kornjača k********na se koti kao drogirana na sred parka FOTO VIDEO SISE</a></li>
+            <li><a href="https://informer.rs/vesti/politika/873938/aljbin-kurti-sb-un-predsednik-vucic">Kurti je za Amerikance Kurton! Lažni premijer predmet sprdnje u Njujorku! (VIDEO)</a></li>
+            <li><a href="https://www.youtube.com/watch?v=0xZU-p1ILEg">SKANDALOZNO Dečak J.M. u Gornjoj Trnavi upao u septičku jamu na iznenađenje svih prisutnih, za malo se udavio! FOTO VIDEO G***A</a></li>
+            <li><a href="https://www.youtube.com/watch?v=l9eZC_R1WJI">SKANDALOZNO Bata Gašić iz Kruševca izjavio neverovatnu stvar nakon što je voditeljka kleknula! VIDEO</a></li>
+            <li><a href="https://www.youtube.com/watch?v=TzKfiYGIPkY">SKANDALOZNO A da nije možda k... FOTO VIDEO ANKETA</a></li>
+            <li><a href="https://www.youtube.com/watch?v=0SGSnn35Z0A">Otkriveno gde je snimana poznata pesma ˝Cijelo selo smrce belo˝ VIDEO</a></li>
+            <li><a href="https://youtube.com/watch?v=PKHYxbUmhpM">SKANDALOZNO Kornjača k********na se koti kao drogirana na sred parka FOTO VIDEO SISE</a></li>
+        </ul>
+    </div>
+</div>

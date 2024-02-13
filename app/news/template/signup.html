@@ -1,21 +1,116 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-  <h2>Register a user</h2>
-  <form method="post">
-    {% csrf_token %}
-    {% for field in form %}
-      <p>
-        {{ field.label_tag }}<br>
-        {{ field }}
-        {% if field.help_text %}
-          <small style="color: grey">{{ field.help_text }}</small>
-        {% endif %}
-        {% for error in field.errors %}
-          <p style="color: red">{{ error }}</p>
-        {% endfor %}
-      </p>
-    {% endfor %}
-    <button type="submit">Register</button>
-  </form>
+
+<style>
+    .custom-button {
+        background-color: #113fa2;
+        border-color: transparent;
+        transition: background-color 0.3s;
+    }
+
+    .custom-button:hover {
+        background-color: #0a6b10; /* Change to the desired hover color */
+    }
+    .error {
+        color: red;
+        font-size: 14px; /* Adjust the font size as needed */
+    }
+    
+</style>
+
+<section class="vh-100">
+  <div class="container-fluid" style="border: 2px solid #113fa2; margin-bottom: 20px; background-color: rgb(246, 238, 228);">
+    <div class="row">
+
+        <div class="col-sm-6 text-black">
+            <div class="d-flex flex-column align-items-center h-custom-2 px-5 ms-xl-4 mt-3 pt-3 pt-xl-0 mt-xl-n3" > <!-- Adjusted padding and added mt-4 for margin-top -->
+                <i class="fas fa-user-plus fa-2x me-2" style="color: #709085;"></i>
+                <span class="h4 fw-bold mb-0">Registracija</span>
+            </div>
+
+            <div class="d-flex flex-column align-items-center h-custom-2 px-5 ms-xl-4 mt-3 pt-3 pt-xl-0 mt-xl-n3" style="height: 580px;"> <!-- Adjusted padding and added margin styles here -->
+              <form method="post">
+            {% csrf_token %}
+
+            <div class="form-outline mb-2">
+              <label class="form-label" for="username" style="font-size: small;">Korisničko ime</label>
+              <input type="text" id="username" name="username" class="form-control form-control-sm" />
+              {% for error in form.username.errors %}
+                <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="form-outline mb-2">
+              <label class="form-label" for="email" style="font-size: small;">Email</label>
+              <input type="email" id="email" name="email" class="form-control form-control-sm" />
+              {% for error in form.email.errors %}
+                <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="form-outline mb-2">
+              <label class="form-label" for="password1" style="font-size: small;">Lozinka</label>
+              <input type="password" id="password1" name="password1" class="form-control form-control-sm" />
+              {% for error in form.password1.errors %}
+                <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="form-outline mb-2">
+              <label class="form-label" for="password2" style="font-size: small;">Potvrdi lozinku</label>
+              <input type="password" id="password2" name="password2" class="form-control form-control-sm" />
+              {% for error in form.password2.errors %}
+                <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="form-outline mb-2">
+              <label class="form-label" for="first_name" style="font-size: small;">Ime</label>
+              <input type="text" id="first_name" name="first_name" class="form-control form-control-sm" />
+              {% for error in form.first_name.errors %}
+                <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="form-outline mb-2">
+              <label class="form-label" for="last_name" style="font-size: small;">Prezime</label>
+              <input type="text" id="last_name" name="last_name" class="form-control form-control-sm" />
+              {% for error in form.last_name.errors %}
+                <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="is_staff" name="is_staff" />
+              <label class="form-check-label" for="is_staff" style="font-size: small;">Editor</label>
+            </div>
+
+            <div class="form-outline mb-2">
+              <label class="form-label" for="categories" style="font-size: small;">Kategorije</label>
+              <br>
+              <select id="categories" name="categories" class="form-select form-select-sm" multiple>
+                {% for category in form.categories.field.queryset %}
+                  <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
+              {% for error in form.categories.errors %}
+                <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="pt-2">
+              <button class="btn btn-info btn-lg btn-block custom-button" type="submit" >Registruj</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="col-sm-6 px-0 d-none d-sm-block">
+        <img src="/media/image/NakedWomanReadingNewspaper.jpg"
+            alt="signup image" class="img-fluid" style="object-fit: cover; object-position: left; border-right: 1px solid #113fa2; height: 100%;">
+    </div>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
