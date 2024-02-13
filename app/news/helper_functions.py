@@ -23,7 +23,7 @@ class NewsService():
     def getbyPageId(self,page_id):
         news = None
         try:
-            news = News.objects.all()
+            news =  News.objects.order_by('-publish_date')
         except Exception as e: raise Http404("DB Error: Cant get all news")
 
         if news and news.count()>=news_per_page:
@@ -42,7 +42,7 @@ class NewsService():
         return news
     
     def search(self, keyword, id, date1, date2, page_id):
-        news=News.objects.all()
+        news =  News.objects.order_by('-publish_date')
         if keyword:
             try:
                 news = news.filter(Q(title__icontains=keyword) | Q(tags__name__icontains=keyword))
