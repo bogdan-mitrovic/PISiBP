@@ -1,10 +1,72 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2>Edit a journalist's privileges</h2>
-            <form method="post" action="">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit">Confirm</button>
-            </form> 
+    <style>
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 20px;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #113fa2;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        button:hover {
+            background-color: #0c2b77;
+        }
+
+        #id_categories {
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        label[for="id_categories"] {
+            display: inline-block;
+            margin-top: 8px;
+        }
+    </style>
+
+    <h2>Uredi urednikove privilegije</h2>
+    <form method="post" action="" class="mt-3">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="{{ form.categories.id_for_label }}">Kategorija</label>
+            {{ form.categories }}
+        </div>
+
+        <button type="submit">Potvrdi</button>
+    </form>
 {% endblock %}
