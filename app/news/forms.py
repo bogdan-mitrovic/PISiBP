@@ -9,7 +9,7 @@ from .models import Category, News, News_draft, UserProfile
 
 
 class Add_news_Form(forms.ModelForm):
-    title = forms.CharField(max_length = 50, required=True)
+    title = forms.CharField(max_length = 250, required=True)
     content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
     image = forms.ImageField(required=False)
     is_up_for_review = forms.BooleanField(required=False)
@@ -29,7 +29,7 @@ class Add_news_Form(forms.ModelForm):
 
 
 class Edit_news_Form(forms.ModelForm):
-    title = forms.CharField(max_length = 50, required=True)
+    title = forms.CharField(max_length = 250, required=True)
     content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
     image = forms.ImageField(required=False)
     class Meta:
@@ -43,7 +43,7 @@ class Edit_news_Form(forms.ModelForm):
 
 
 class Edit_draft_Form(forms.ModelForm):
-    title = forms.CharField(max_length = 50, required=True)
+    title = forms.CharField(max_length = 250, required=True)
     content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30}), required=True)
     image = forms.ImageField(required=False)
     is_up_for_review = forms.BooleanField(required=False)
