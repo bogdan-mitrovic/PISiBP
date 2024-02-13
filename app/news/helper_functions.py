@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import math
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -25,8 +25,9 @@ class NewsService():
         try:
             news = News.objects.all()
         except Exception as e: raise Http404("DB Error: Cant get all news")
+
         if news and news.count()>=news_per_page:
-            last_page = news.count() / news_per_page
+            last_page = math.ceil(news.count() / news_per_page)
             page_id = last_page if page_id > last_page else page_id
             news = news[news_per_page*(page_id-1):news_per_page*page_id]
             return news, last_page
@@ -65,9 +66,9 @@ class NewsService():
                 news = news.filter(Q(publish_date__icontains=date1))
             except Exception as e: raise Http404("DB Error: Cant get news by date")
         news = news.distinct()
+
         if news and news.count()>=news_per_page:
-            
-            last_page = news.count() / news_per_page
+            last_page = math.ceil(news.count() / news_per_page)
             page_id = last_page if page_id > last_page else page_id
             news = news[news_per_page*(page_id-1):news_per_page*page_id]
             return news, last_page
