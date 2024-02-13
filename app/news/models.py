@@ -13,7 +13,7 @@ from tinymce.models import HTMLField
 
 class Category(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=250)
     description = models.CharField(max_length=200, null=True)
 
     def __str__(self):
@@ -36,7 +36,7 @@ class UserProfile(models.Model):
 
 class News(models.Model):
     id = models.AutoField(primary_key=True)
-    title = models.CharField(null=True, max_length = 50, db_index=True)
+    title = models.CharField(null=True, max_length = 250, db_index=True)
     content = HTMLField(max_length = 5000)
     publish_date = models.DateTimeField('date published')
     views = models.IntegerField(default=0)
@@ -48,7 +48,7 @@ class News(models.Model):
     #while a Likes object keeps track of which objects are liked, and by whom
 
     category = models.ForeignKey(Category, null=True, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to="image", null=True, blank=True)
+    image = models.ImageField(upload_to="image", null=True, blank=True, max_length = 5000)
     tags = TaggableManager()
     
     creator = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
@@ -81,7 +81,7 @@ class News_draft(models.Model):
     title = models.CharField(null=True, max_length = 50)
     content = HTMLField(max_length = 5000)
     category = models.ForeignKey(Category, null=True, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to="image", null=True, blank=True)
+    image = models.ImageField(upload_to="image", null=True, blank=True, max_length = 5000)
     tags = TaggableManager()
     draft_of = models.ForeignKey(News, null=True, on_delete=models.CASCADE)
     #keep track of the original news article, if this is an edit
