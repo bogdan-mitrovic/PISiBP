@@ -1,14 +1,138 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2>Add a news article</h2>
-            <form method="post" action="" enctype="multipart/form-data">
-                {% csrf_token %}
-                <br>
-                {{ form.as_p }}
-                <button type="submit">Add</button>
-            </form> 
+    <style>
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        button {
+            background-color: #113fa2;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 15px; 
+        }
+
+        button:hover {
+            background-color: #0c2b77;
+        }
+
+
+        #id_is_up_for_review {
+            margin-top: 10px; 
+            display: inline-block; 
+        }
+
+        label[for="id_is_up_for_review"] {
+            display: inline-block; /* Make the label inline with the checkbox */
+            margin-top: 8px; /* Adjust the margin as needed */
+        }
+        #id_image {
+            display: none; /* Hide the default file input */
+        }
+
+        #uploadImageBtn {
+            background-color: #113fa2;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #uploadImageBtn:hover {
+            background-color: #0c2b77;
+        }
+        #imageStatus {
+            margin-top: 5px;
+            color: #333;
+        }
+    </style>
+
+    <h2>Dodaj novu vest</h2>
+    <form method="post" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Title -->
+        <label for="{{ form.title.id_for_label }}">Naslov</label>
+        {{ form.title }}
+
+        <!-- Tags -->
+        <label for="{{ form.tags.id_for_label }}">Tagovi</label>
+        {{ form.tags }}
+        <div class="note">Tagove odvojiti zarezom!</div>
+        <!-- Content -->
+        <label for="{{ form.content.id_for_label }}">Sadržaj</label>
+        {{ form.content }}
+
+        <!-- Category -->
+        <label for="{{ form.category.id_for_label }}">Kategorija</label>
+        {{ form.category }}
+
+        <label for="id_image" style="display: block;">Slika</label>
+        <input type="file" name="image" id="id_image" style="display: none;">
+        <label id="uploadImageBtn" for="id_image">Izaberi sliku</label>
+
+        <div id="imageStatus">Nijedna slika nije izabrana</div>
+
+        <!-- is_up_for_review -->
+        <label for="{{ form.is_up_for_review.id_for_label }}">        Za pregled        </label>
+            {{ form.is_up_for_review }}
+    
+
+
+        <br>
+        <button type="submit">Dodati</button>
+    </form>
+
+    <script>
+        document.getElementById('uploadImageBtn').addEventListener('click', function () {
+            document.getElementById('id_image').click();
+        });
+
+        document.getElementById('id_image').addEventListener('change', function () {
+            const fileName = this.value.split('\\').pop(); // Extracting the filename
+            document.getElementById('imageStatus').innerText = fileName ? `Slika izabrana: ${fileName}` : 'Nijedna slika nije izabrana';
+        });
+    </script>
 {% endblock %}
+
+
 
 {% block extrajs %}
     {{ form.media }}
