@@ -9,181 +9,213 @@
 {% endblock %}
 
 {% block content %}
-        <div class="row">
-            <div class="col-md-8">
-              <div class="row">
-                  <h1>{{news.title}}</h1>
-                  <div class="col-md-12 p-1">
-                      Views : {{news.views}}
-                      <!--<button type="button" class="btn btn-outline-secondary btn-sm">
-                          <i class="fas fa-thumbs-up"></i> Like
-                      </button>-->
-                  </div>
-                  <div class="col-md-12 p-1">
-                    Date created: {{news.publish_date}}
-                  </div>
-                  <div class="col-md-12 p-1">
-                    Tags:
-                    {% for tag in news.tags.all %}
-                        {{ tag.name }}
-                        {% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                  </div>
-                
-                  {% if news.image %}
-                    <img class="img-fluid mx-auto p-2 content-image" src="{{news.image}}">
-                  {% else %}
-                    <img class="img-fluid" src="https://via.placeholder.com/900x400">
-                  {% endif %}
-                  
-                  <br>
-                  <br>
-                  <style>
-                    /* Apply a fixed width of 300 pixels to the div */
-                    .fixed-width-div {
-                      width: 900px;
-                      /* Add other styles as needed */
-                      background-color: #f0f0f0;
-                      border-radius: 15px;
-                      padding: 10px;
-                      margin: 10px;
-                    }
-                  </style>
-                <div class = "fixed-width-div">
-                  <p class="p-2">
-                    {{ news.content|safe }}
-                </p>
-              </div>
-                  <br>
-                  <br>
-                <div>
-                  <!-- Edit Button -->
-                    {% if user == users_edit %}
-                      <a href="{% url 'edit-news' news.id %}" class="btn btn-primary">Edit</a>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <h1>{{news.title}}</h1>
+                </div>
+
+                {% if news.image %}
+                    {% if news.image|stringformat:"s"|slice:":5" == "image" %}
+                        <img class="card-img-top thum-image" src="/media/{{news.image}}" alt="Card image cap" style="width: 100%; height: auto;">
+                    {% else %}
+                        <img class="card-img-top thum-image" src="{{news.image}}" alt="Card image cap" style="width: 100%; height: auto;">
                     {% endif %}
-                    {% if user in users_delete%}
-                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteConfirmationModal">
-                      Delete
-                    </button>
-                    {% endif %}
-                    <br>
-                    <br>
-                    <br>
-                  </div>
-<div>
-  <form action="{% url 'like-news' news.id %}" method="POST" style="display: inline-block;">
-    {% csrf_token %}
-    <button type="submit" value="{{news.id}}" class="btn btn-info">
-      <i class="fas fa-thumbs-up"></i> Like
-    </button>
-  </form>
-  <strong class="text-secondary">{{ news.likes }} Like{{ news.likes|pluralize }}</strong>
-
-
-
-
-  <form action="{% url 'dislike-news' news.id %}" method="POST" style="display: inline-block;">
-    {% csrf_token %}
-    <button type="submit" value="{{news.id}}" class="btn btn-info">
-      <i class="fas fa-thumbs-down"></i> Dislike
-    </button>
-  </form>
-  <strong class="text-secondary">{{ news.dislikes }} Dislike{{ news.dislikes|pluralize }}</strong>
-</div>
-
-                    
-    
-              <div>
-                <h1>Comments:</h1>
-                  {% if not user.is_authenticated %}
-                  <div class="form-group">
-                    <form action="/pages/comment" method="post">
-                      {% csrf_token %}
-                      <label for="tmp_username">Temporary Username:</label>
-                      <input type="text" id="tmp_username" name="tmp_username" required>
-                      {{ form }}
-                      <input class="btn text-white btn-danger m-2" type="submit" value="Submit">
-                    </form>
-                  </div>
+                {% else %}
+                    <img class="card-img-top thum-image" src="https://via.placeholder.com/150" alt="Card image cap" style="width: 100%; height: auto;">
                 {% endif %}
-                {% for item in comments %}
-                <div class="card card-inner m-2">
-                  <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-2">
-                          <img src="https://image.ibb.co/jw55Ex/def_face.jpg" class="img img-rounded img-fluid"/>
-                          <p class="text-secondary text-center">{{ item.publish_date|timesince }} ago</p>
-                        
-                        </div>
-                        <div class="col-md-10">
-                          <p><a href="#"><strong>
-                            {{item.tmp_username}}
-                          </strong></a></p>
-                          <p>{{item.text}}</p>
-                        </div>
-                        <br>
-                        <div>
-                          <form action="{% url 'like-comment' item.id %}" method="POST" style="display: inline-block;">
-                            {% csrf_token %}
-                            <button type="submit" value="{{item.id}}" class="btn btn-info">
-                              <i class="fas fa-thumbs-up"></i> Like
-                            </button>
-                          </form>
-                          <strong class="text-secondary">{{ item.likes }} Like{{ item.likes|pluralize }}</strong>
-                        </div>
-                        
-                        <br>
-                        
-                        <div>
-                          <form action="{% url 'dislike-comment' item.id %}" method="POST" style="display: inline-block;">
-                            {% csrf_token %}
-                            <button type="submit" value="{{item.id}}" class="btn btn-info">
-                              <i class="fas fa-thumbs-down"></i> Dislike
-                            </button>
-                          </form>
-                          <strong class="text-secondary">{{ item.dislikes }} Dislike{{ item.dislikes|pluralize }}</strong>
-                        </div>
-                        
-                    </div>
-                  </div>
+
+                <br>
+                <br>
+                <style>
+                    .fixed-width-div {
+                        width: 100% !important;
+                        background-color: rgb(246, 238, 228);
+                        border-radius: 15px;
+                        padding: 20px;
+                        margin-bottom: 10px;
+                    }
+                </style>
+
+                <div class="fixed-width-div">
+                    <p class="p-2">
+                        {{ news.content|safe }}
+                    </p>
                 </div>
-                {% endfor %}
+                <br>
+                <br>
+
+                <div>
+                    <!-- Edit Button -->
+                    {% if user == users_edit %}
+                        <a href="{% url 'edit-news' news.id %}" class="btn btn-primary">Izmeni</a>
+                    {% endif %}
+                    {% if user in users_delete %}
+                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteConfirmationModal">
+                            Delete
+                        </button>
+                    {% endif %}
+                    <br>
+                    <br>
+                    <br>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+            <div class="col-md-12 p-1 style="margin-bottom: 20px;">
+              <div class="col-md-12 p-1">
+                  <strong>Pregledi:</strong> {{ news.views }}
               </div>
-            </div>
-            <div class="col-md-4">
-                <ul class="list-group">
-                    <li class="list-group-item">Trending Articles</li>
-                    {% for item in trend %}
-                    <li class="list-group-item"><a href="{% url 'news-detail' item.id%} ">{{item.title}}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        <!-- Confirmation Modal -->
-        <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
-          <div class="modal-dialog" role="document">
-              <div class="modal-content">
-                  <div class="modal-header">
-                      <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                      </button>
-                  </div>
-                  {% if not user.is_staff %}
-                  <div class="modal-body">
-                    Are you sure you want to request deletion of this news article?
-                </div>
-                  {% else %}
-                  <div class="modal-body">
-                      Are you sure you want to delete this news article?
-                  </div>
-                  {% endif %}
-                  <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                      <a href="{% url 'delete-news' news.id %}" class="btn btn-danger">Delete</a>
-                  </div>
+          
+              <div class="col-md-12 p-1">
+                  <strong>Datum kreiranja:</strong> {{ news.publish_date }}
+              </div>
+          
+              <div class="col-md-12 p-1">
+                  <strong>Tagovi:</strong>
+                  {% for tag in news.tags.all %}
+                      {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
               </div>
           </div>
+
+
+
+
+
+
+
+          
+          <div class="col-md-12 text-center" style="margin-bottom: 20px;">
+              <form action="{% url 'like-news' news.id %}" method="POST" style="display: inline-block;">
+                  {% csrf_token %}
+                  <button type="submit" value="Sviđ" class="btn btn-info">
+                      <i class="fas fa-thumbs-up"></i> Sviđ
+                  </button>
+              </form>
+              <strong class="text-secondary">{{ news.likes }} Sviđova</strong>
+          
+              <form action="{% url 'dislike-news' news.id %}" method="POST" style="display: inline-block;">
+                  {% csrf_token %}
+                  <button type="submit" value="Nesviđ" class="btn btn-info">
+                      <i class="fas fa-thumbs-down"></i> Nesviđ
+                  </button>
+              </form>
+              <strong class="text-secondary">{{ news.dislikes }} Nesviđova</strong>
+              <hr>
+          </div>
+
+
+
+
+
+          
+
+                <div class="col-md-12">
+                    <h1>Komentari:</h1>
+                    {% if not user.is_authenticated %}
+                        <div class="form-group">
+                            <form action="/pages/comment" method="post">
+                                {% csrf_token %}
+                                <label for="tmp_username">Trenutno korisničko ime:</label>
+                                <input type="text" id="tmp_username" name="tmp_username" required>
+                                <br>
+                                {{ form }}
+                                <input class="btn text-white btn-primary m-2" type="submit" value="Potvrdi">
+                            </form>
+                        </div>
+                    {% endif %}
+                    {% for item in comments %}
+                        <div class="card card-inner m-2">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <img src="https://image.ibb.co/jw55Ex/def_face.jpg" class="img img-rounded img-fluid"/>
+                                        <p class="text-secondary text-center">{{ item.publish_date|timesince }} ago</p>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <p><a href="#"><strong>{{ item.tmp_username }}</strong></a></p>
+                                        <p>{{ item.text }}</p>
+                                    </div>
+                                    <hr> <!-- Dodajte horizontalnu liniju između komentara -->
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-12 text-center">
+                                            <form action="{% url 'like-comment' item.id %}" method="POST" style="display: inline-block;">
+                                                {% csrf_token %}
+                                                <button type="submit" value="Sviđ" class="btn btn-info">
+                                                    <i class="fas fa-thumbs-up"></i> Sviđ
+                                                </button>
+                                            </form>
+                                            <strong class="text-secondary">{{ item.likes }} Sviđova</strong>
+                                        </div>
+                                    </div>
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-12 text-center">
+                                            <form action="{% url 'dislike-comment' item.id %}" method="POST" style="display: inline-block;">
+                                                {% csrf_token %}
+                                                <button type="submit" value="Nesviđ" class="btn btn-info">
+                                                    <i class="fas fa-thumbs-down"></i> Nesviđ
+                                                </button>
+                                            </form>
+                                            <strong class="text-secondary">{{ item.dislikes }} Nesviđova</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    {% endfor %}
+                </div>
+                <hr>
+                
+                
+                
+                
+
+            </div>
         </div>
+        
+        <br>
+    </div>
+
+
+
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">Potvrdi brisanje</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% if not user.is_staff %}
+                    <div class="modal-body">
+                        Da li ste sigurni da želite da zakazete brisanje ovog artikla?
+                    </div>
+                {% else %}
+                    <div class="modal-body">
+                        Da li ste sigurni da želite da obrišete ovaj artikal?
+                    </div>
+                {% endif %}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkazi</button>
+                    <a href="{% url 'delete-news' news.id %}" class="btn btn-danger">Obrisi</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

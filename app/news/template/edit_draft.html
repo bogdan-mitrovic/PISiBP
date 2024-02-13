@@ -1,12 +1,105 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2>Edit a news draft</h2>
-            <form method="post" action="" enctype="multipart/form-data">
-                {% csrf_token %}
-                <br>
-                <input type="hidden" id="selectedCategory" name="category_id" value="">
-                {{ form.as_p }}
-                <button type="submit">Confirm</button>
-            </form> 
+    <style>
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        select,
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #uploadImageBtn {
+            background-color: #113fa2;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #uploadImageBtn:hover {
+            background-color: #0c2b77;
+        }
+        #imageStatus {
+            margin-top: 5px;
+            color: #333;
+        }
+        button {
+            background-color: #113fa2;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        button:hover {
+            background-color: #0c2b77;
+        }
+        
+        
+        label[for="id_is_up_for_review"] {
+            display: inline-block; /* Make the label inline with the checkbox */
+            margin-top: 8px; /* Adjust the margin as needed */
+        }
+        #id_tags {
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        label[for="id_tags"] {
+            display: inline-block;
+            margin-top: 8px;
+        }
+    </style>
+
+    <h2>Preuredi novi nacrt</h2>
+    <form method="post" action="" enctype="multipart/form-data" class="mt-3">
+        {% csrf_token %}
+
+            <label for="{{ form.title.id_for_label }}">Naslov</label>
+            {{ form.title }}
+
+            <label for="{{ form.tags.id_for_label }}">Tagovi</label>
+            {{ form.tags }}
+            <div class="note">Tagove odvojiti zarezom!</div>
+
+            <label for="{{ form.content.id_for_label }}">Sadržaj</label>
+            {{ form.content }}
+
+            <label for="id_image" style="display: block;">Slika</label>
+            <input type="file" name="image" id="id_image" style="display: none;">
+            <label id="uploadImageBtn" for="id_image">Izaberi sliku</label>
+    
+            <div id="imageStatus">Nijedna slika nije izabrana</div>
+            <label for="{{ form.is_up_for_review.id_for_label }}">        Za pregled        </label>
+            {{ form.is_up_for_review }}
+        <br>
+        <button type="submit">Potvrdi</button>
+    </form>
 {% endblock %}
