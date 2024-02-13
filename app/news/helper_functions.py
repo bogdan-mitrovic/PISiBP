@@ -79,14 +79,6 @@ class NewsService():
             News.objects.filter(id=news_id).update(views=F('views')+1)
         except Exception as e: raise Http404("DB Error: cant update the view count")
     
-    def getRecentMostCommentedNews(self):
-        try:
-            check_date = timezone.now() + relativedelta(months=-settings.RECENT_NEWS_MONTH)
-            news = Comment.objects.filter(news__publish_date__gt=check_date).values('news_id', 'news__title', 'news__views').annotate(total=Count('news_id'))
-            return news
-        except Exception as e: raise Http404("DB Error: cant get the most commented news") 
-
-
 #used for queries on Category
 class CategoryService():
     def __init__(self):
@@ -225,16 +217,4 @@ def get_client_ip(request):
 
 #way of putting news in "Trending"
 def getTrendingNews():
-    mostCommentedNews = NewsService().getRecentMostCommentedNews()
-    trending = []
-    for news in mostCommentedNews:
-        item = {}
-        item["id"] = news["news_id"]
-        item["title"] = news["news__title"]
-        score = news["news__views"] * 1 + news["total"] * 5
-        item["score"] = score
-        trending.append(item)
-
-    trending = sorted(trending, key=lambda k: k['score'], reverse=True) 
-
-    return trending[:5]
+    return News.objects.order_by('-views','-likes','-dislikes')[:5]
