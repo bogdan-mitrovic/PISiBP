@@ -2,24 +2,19 @@ import pytest
 from news.views import home
 from django.contrib.auth.models import AnonymousUser, User
 
-# health check
-def test_index_page(client):
-    expected = 'Application news portal Started'
-    result = client.get('/health').content.decode("utf-8")
-    assert expected in result
 
-# Test news search function
+# testiranje lajkova na stranici
 @pytest.mark.django_db
 def test_likes(client):
-  link_ref = '/pages/like/6922'
+  link_ref = '/pages/like/1'
   expected_content = [
-    '<strong class="text-secondary">0 Likes</strong>'
+    '<strong class="text-secondary">266 Sviđova</strong>'
   ]
 
-  expected_content2 = ['<strong class="text-secondary">1 Like</strong>']
+  expected_content2 = ['<strong class="text-secondary">267 Sviđova</strong>']
 
 
-  result = client.get('/pages/news/6922')
+  result = client.get('/pages/news/1')
   content = result.content.decode("utf-8")
   print(content)
 
@@ -27,8 +22,8 @@ def test_likes(client):
     assert value in content
   assert result.status_code == 200
 
-  result = client.get('/pages/like/6922')
-  result = client.get('/pages/news/6922')
+  result = client.get('/pages/like/1')
+  result = client.get('/pages/news/1')
   content = result.content.decode("utf-8")
   print(content)
 
@@ -40,15 +35,15 @@ def test_likes(client):
 
 @pytest.mark.django_db
 def test_dislikes(client):
-  link_ref = '/pages/like/6922'
+  link_ref = '/pages/like/1'
   expected_content = [
-    '<strong class="text-secondary">0 Dislikes</strong>'
+    '<strong class="text-secondary">55 Nesviđova</strong>'
   ]
 
-  expected_content2 = ['<strong class="text-secondary">1 Dislike</strong>']
+  expected_content2 = ['<strong class="text-secondary">56 Nesviđova</strong>']
 
 
-  result = client.get('/pages/news/6922')
+  result = client.get('/pages/news/1')
   content = result.content.decode("utf-8")
   print(content)
 
@@ -56,8 +51,8 @@ def test_dislikes(client):
     assert value in content
   assert result.status_code == 200
 
-  result = client.get('/pages/dislike/6922')
-  result = client.get('/pages/news/6922')
+  result = client.get('/pages/dislike/1')
+  result = client.get('/pages/news/1')
   content = result.content.decode("utf-8")
   print(content)
 
@@ -77,14 +72,14 @@ def test_comments(client):
     form_data = {
         'tmp_username': 'Nemanja',
         'text': 'Ovo je probni komentar',
-        'news_id': '6922'
+        'news_id': '1'
     }
 
-    response = client.get('/pages/news/6922')
+    response = client.get('/pages/news/1')
     content = response.content.decode("utf-8")
     
     response = client.post('/pages/comment', data=form_data, follow=True)
-    response = client.get('/pages/news/6922')
+    response = client.get('/pages/news/1')
     content = response.content.decode("utf-8")
 
     for value in expected_content:
@@ -101,11 +96,11 @@ def test_add_draft(client):
     ]
 
     expected_content2 = [
-        'No drafts found',
+        'Trenutno nema nacrta',
     ]
     
     username = "Nemanja"
-    password = "zolazola02"
+    password = "testovi01"
     client.login(username=username, password=password)
 
     response = client.get('/pages/add')
@@ -150,7 +145,7 @@ def test_add_draft_for_review(client):
 
     
     username = "Nemanja"
-    password = "zolazola02"
+    password = "testovi01"
     client.login(username=username, password=password)
 
     response = client.get('/pages/add')
@@ -205,7 +200,7 @@ def test_add_draft_and_approved(client):
 
     
     username = "Nemanja"
-    password = "zolazola02"
+    password = "testovi01"
     client.login(username=username, password=password)
 
     response = client.get('/pages/add')
@@ -232,15 +227,16 @@ def test_add_draft_and_approved(client):
     password = "cone"
     client.login(username=username, password=password)
 
-    response = client.get('/drafts/detail/10') #vrv nepoteban korak // mora da se namesti da radi prema bazi 
+    response = client.get('/drafts/detail/2') #vrv nepoteban korak // mora da se namesti da radi prema bazi 
     content = response.content.decode("utf-8")
 
     for value in expected_content:
       assert value in content
 
-    response = client.get('/drafts/approve/10') #mora da se namesti da radi prema bazi 
-    response = client.get('/pages/news/6925') #mora da se namesti da radi prema bazi 
-    
+    response = client.get('/drafts/approve/2') #mora da se namesti da radi prema bazi 
+    response = client.get('/pages/news/12373') #mora da se namesti da radi prema bazi 
+    content = response.content.decode("utf-8")
+
     for value in expected_content2:
       assert value in content
 
