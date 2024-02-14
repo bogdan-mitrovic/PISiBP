@@ -144,7 +144,7 @@ class CustomJournalistEditForm(forms.ModelForm):
 
 #simple form, used when creating a comment
 class Comment_text_Form(forms.Form):
-    text = forms.CharField(widget=forms.Textarea ,  label='Comment', max_length=100)
+    text = forms.CharField(widget=forms.Textarea ,  label='Komentar', max_length=100)
     news_id = forms.CharField()
     text.widget.attrs.update({'class':'form-control', 'rows':'5'})
     news_id.widget = forms.HiddenInput()
