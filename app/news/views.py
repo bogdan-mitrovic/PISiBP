@@ -156,7 +156,7 @@ def delete(request, news_id):
     else:    
         if request.user.is_authenticated and not (News_draft.objects.filter(draft_of = news, is_up_for_deletion = True)):
             
-            draft = News_draft(draft_of = news, is_up_for_deletion = True, title=news.title, is_up_for_review = True, creator = request.user)
+            draft = News_draft(draft_of = news, is_up_for_deletion = True, title=news.title, is_up_for_review = True, creator = request.user, category=news.category)
             
             try:
                 draft.save()

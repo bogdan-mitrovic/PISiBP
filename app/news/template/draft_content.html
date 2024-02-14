@@ -8,6 +8,16 @@
 {% endif %}
 {% endblock %}
 
+
+<style>
+  h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 150px;
+  }
+
+</style>
+
 {% block content %}
       {% if not draft.is_up_for_deletion %}
         
@@ -17,11 +27,7 @@
                   <h1>{{draft.title}}</h1>
                   
                   <div class="col-md-12 p-1">
-                    Tagovi:
-                    {% for tag in draft.tags.all %}
-                        {{ tag.name }}
-                        {% if not forloop.last %},{% endif %}
-                    {% endfor %}
+                    <strong>Tagovi:</strong> {% for tag in news.tags.all %} {{ tag.name }}{% if not forloop.last %}, {% endif %} {% endfor %}
                   </div>
                 
                   {% if draft.image %}
@@ -95,11 +101,11 @@
           </div>
         </div>
         {% else %}
-        <div class="row">
-            <h1>Novinar je podneo zahtev za brisanje</h1>
-            <a href="{% url 'news-detail' draft.draft_of.id %}" class="btn btn-primary">Vesti</a>
+        <h1 style="margin-bottom: 180px; text-align: center;">Novinar je podneo zahtev za brisanje</h1>
+        <div class="row" style="text-align: center; margin-left: 450px;">
+            <a href="{% url 'news-detail' draft.draft_of.id %}"     style="background-color: #113fa2; margin-bottom: 15px;" class="btn btn-primary">Vesti</a>
             {% if user.is_superuser or user.is_authenticated and user.is_staff %}
-                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteConfirmationModal2">
+                    <button type="button" style="margin-bottom: 15px;" class="btn btn-danger" data-toggle="modal" data-target="#deleteConfirmationModal2">
                       Odobri
                     </button>
             {% endif %}
@@ -114,10 +120,10 @@
                       </button>
                   </div>
                   <div class="modal-body">
-                      Da li ste sigurni da hocete da obrisete nacrt?
+                      Da li ste sigurni da hoćete da obrišete vest?
                   </div>
                   <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkazi</button>
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkaži</button>
                       <a href="{% url 'approve-draft' draft.id %}" class="btn btn-danger">Potvrdi</a>
                   </div>
               </div>

@@ -171,6 +171,7 @@ pip install -r requirement.txt
 * Како бисте покренули тестове, пребаците се у одговарајући директоријум, и покрените их:
   ```bash
   cd app
+  pytest test/test_unit.py
   pytest test/test_int.py
   ```
 
