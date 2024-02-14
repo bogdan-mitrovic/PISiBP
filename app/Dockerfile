@@ -21,5 +21,4 @@ EXPOSE 8000
 
 # Define the command to run on container start
 # Run the Django development server
-CMD ["sh", "-c", "python /app/manage.py migrate && python /app/manage.py createsuperuser && python /app/manage.py runserver 0.0.0.0:8000"]
 
